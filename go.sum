@@ -1,0 +1,10 @@
+github.com/go-msvc/errors v1.2.0 h1:fTZypG1qs7lDtYfGYKDey62lMCT5ClsyxeMysrxNo0g=
+github.com/go-msvc/errors v1.2.0/go.mod h1:dbMiCuWpUiARCkC19IDEpcGIx11VYWq1+vGfF0NAenA=
+github.com/go-msvc/logger v1.0.0 h1:OELJmIpXSRLnbmy4UMc1IWQiQBH5ODZDjeofc540Lzg=
+github.com/go-msvc/logger v1.0.0/go.mod h1:qHIjKcyl03uKxD2SrJa6UqSfp0RuOiuOSyb8i1NLhKw=
+github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
+github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
+github.com/gorilla/securecookie v1.1.1 h1:miw7JPhV+b/lAHSXz4qd/nN9jRiAFV5FwjeKyCS8BvQ=
+github.com/gorilla/securecookie v1.1.1/go.mod h1:ra0sb63/xPlUeL+yeDciTfxMRAA+MP+HVt/4epWDjd4=
+github.com/gorilla/sessions v1.2.1 h1:DHd3rPN5lE3Ts3D8rKkQ8x/0kqfeNmBAaiSi+o7FsgI=
+github.com/gorilla/sessions v1.2.1/go.mod h1:dk2InVEVJ0sfLlnXv9EAgkf6ecYs/i80K/zI+bUmuGM=

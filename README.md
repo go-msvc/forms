@@ -24,15 +24,18 @@ Note: to access the forms outside, need generic go-msvc api gateway to get it fr
 - Created micro-service operations to store documents
 - Displaying other types of fields
 - Submit documents into micro-service
+- Added support for markdown in titles and descriptions
+- Added campaign to the service and to web, but web wait for redisClient to send a notification
 
 ## Next ##
+- Add campaigns to control document substitution and notification sending ...
+- Consume notifications
 - Template: Field description as hint when hover over field
 - Form Template must use java script to validate forms while filled in
 - Form validate: all fields must have unique names in scope
 - Allow existing document to be opened for editing and submit new version of document
 - Add basic field validation into the form and template (e.g. date min/max already added)
 - Add basic display options
-- Send notifications and consume
 - Support for user scripts - compile into go code? or see if can execute python code? Handle exceptions!
 
 ## Apps ##

@@ -19,6 +19,11 @@ func main() {
 		ms.WithOper("upd_doc", updDoc),
 		ms.WithOper("del_doc", delDoc),
 		ms.WithOper("find_docs", findDoc),
+		ms.WithOper("add_campaign", addCampaign),
+		ms.WithOper("get_campaign", getCampaign),
+		ms.WithOper("upd_campaign", updCampaign),
+		ms.WithOper("del_campaign", delCampaign),
+		ms.WithOper("find_campaigns", findCampaigns),
 	)
 	if err := config.Load(); err != nil {
 		panic(err)

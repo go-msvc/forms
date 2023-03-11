@@ -1,4 +1,4 @@
-{{define "head"}}<title>{{.HtmlTitle}}</title>{{end}}
+{{define "head"}}<title>{{.Title}}</title>{{end}}
 {{define "body"}}
 
   <script>
@@ -24,7 +24,7 @@ function openSection(evt, sectionName) {
 }
   </script>
 
-  <form class="modal-content animate" action="/form/{{.ID}}" method="POST">
+  <form class="modal-content animate" action="{{.Action}}" method="POST">
     <!-- data that user cannot edit -->
     <!-- todo: should be in the context for security -->
     <input name="form_id" value="{{.ID}}" type="hidden"/>

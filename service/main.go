@@ -14,16 +14,23 @@ func main() {
 		ms.WithOper("upd_form", updForm),
 		ms.WithOper("del_form", delForm),
 		ms.WithOper("find_forms", findForm),
+
 		ms.WithOper("add_doc", addDoc),
 		ms.WithOper("get_doc", getDoc),
 		ms.WithOper("upd_doc", updDoc),
 		ms.WithOper("del_doc", delDoc),
 		ms.WithOper("find_docs", findDoc),
+
 		ms.WithOper("add_campaign", addCampaign),
 		ms.WithOper("get_campaign", getCampaign),
 		ms.WithOper("upd_campaign", updCampaign),
 		ms.WithOper("del_campaign", delCampaign),
 		ms.WithOper("find_campaigns", findCampaigns),
+
+		ms.WithOper("add_session", addSession),
+		ms.WithOper("get_session", getSession),
+		ms.WithOper("upd_session", updSession),
+		ms.WithOper("del_session", delSession),
 	)
 	if err := config.Load(); err != nil {
 		panic(err)

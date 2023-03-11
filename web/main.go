@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -41,9 +40,11 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/home", page("home"))
 	r.HandleFunc("/login", page("login"))
-	r.HandleFunc("/form/{id}", formHandler)
-	r.HandleFunc("/campaign/{id}", campaignHandler)
-	r.HandleFunc("/", page("home")) //defaultHandler)
+	//r.HandleFunc("/form/{id}", formHandler)
+	//r.HandleFunc("/campaign_/{id}", campaignHandler)
+	//r.HandleFunc("/form/{id}", page2(showForm, postForm)
+	r.HandleFunc("/campaign/{id}", page2(showCampaign, postCampaign)) //new attempt to replace campaignHandler to include ctx and cookie data
+	r.HandleFunc("/", page("home"))                                   //defaultHandler)
 	http.Handle("/", r)
 
 	//fileServer serves static files such as style sheets from the ./resources folder
@@ -240,24 +241,24 @@ func showPage(ctx context.Context, t *template.Template, data any, httpRes http.
 	}
 }
 
-func postForm(ctx context.Context, values url.Values) (forms.Doc, error) {
-	log.Debugf("submitForm: %+v", values)
+func postForm(ctx context.Context, session *forms.Session, values url.Values) (forms.Doc, error) {
+	//log.Debugf("submitForm: %+v", values)
 
 	//todo: security should include doc token fetched from db, to restrict update
 
 	//get form id and revision
-	formID := values.Get("form_id")
-	formRevStr := values.Get("form_rev")
-	if formID == "" || formRevStr == "" {
+	formID := session.Data["form_id"].(string)
+	formRevValue, gotRev := session.Data["form_rev"]
+	if formID == "" || !gotRev {
 		log.Errorf("1")
 		return forms.Doc{}, errors.Errorf("missing form id/rev")
 	}
-	formRev, err := strconv.ParseInt(formRevStr, 10, 64)
+	formRev, err := strconv.ParseInt(fmt.Sprintf("%v", formRevValue), 10, 64)
 	if err != nil {
 		log.Errorf("1")
-		return forms.Doc{}, errors.Wrapf(err, "invalid form rev(%s)", formRevStr)
+		return forms.Doc{}, errors.Wrapf(err, "invalid form rev(%v)", formRevValue)
 	}
-	log.Debugf("submit form.id(%s).rev(%v)", formID, formRev)
+	//log.Debugf("submit form.id(%s).rev(%v)", formID, formRev)
 	//get doc id (if editing existing doc)
 	// docID := values["doc_id"]
 	// docRev := values["doc_rev"]
@@ -270,17 +271,7 @@ func postForm(ctx context.Context, values url.Values) (forms.Doc, error) {
 		Data: map[string]interface{}{},
 	}
 	for n, v := range values {
-		//use switch to skip the fields that are not part of the document
-		//todo: remove later when these are managed in context
-		switch n {
-		case "campaign_id":
-		case "form_id":
-		case "form_rev":
-		case "doc_id":
-		case "doc_rev":
-		default:
-			doc.Data[n] = v
-		}
+		doc.Data[n] = v
 	}
 
 	//use ms client to store the document
@@ -379,221 +370,221 @@ type ErrorData struct {
 //		}
 //		return nil
 //	}
-func formHandler(httpRes http.ResponseWriter, httpReq *http.Request) {
-	vars := mux.Vars(httpReq)
-	id := vars["id"]
+// func formHandler(httpRes http.ResponseWriter, httpReq *http.Request) {
+// 	vars := mux.Vars(httpReq)
+// 	id := vars["id"]
 
-	//use ms client to fetch the form
-	//ms-client use one id for context, request and own domain, as it does only one request then terminates
-	ctx := context.Background()
-	res, err := msClient.Sync(
-		ctx,
-		ms.Address{
-			Domain:    formsDomain,
-			Operation: "get_form",
-		},
-		time.Millisecond*time.Duration(formsTTL),
-		formsinterface.GetFormRequest{
-			ID: id,
-		},
-		formsinterface.GetFormResponse{})
-	if err != nil {
-		log.Errorf("form.id(%s) not found", id)
-		httpRes.Header().Set("Content-Type", "text/plain")
-		http.Error(httpRes, fmt.Sprintf("unknown form id(%s)", id), http.StatusNotFound)
-		return
-	}
-	log.Debugf("Got res (%T)%+v", res, res)
-	form := res.(formsinterface.GetFormResponse).Form
+// 	//use ms client to fetch the form
+// 	//ms-client use one id for context, request and own domain, as it does only one request then terminates
+// 	ctx := context.Background()
+// 	res, err := msClient.Sync(
+// 		ctx,
+// 		ms.Address{
+// 			Domain:    formsDomain,
+// 			Operation: "get_form",
+// 		},
+// 		time.Millisecond*time.Duration(formsTTL),
+// 		formsinterface.GetFormRequest{
+// 			ID: id,
+// 		},
+// 		formsinterface.GetFormResponse{})
+// 	if err != nil {
+// 		log.Errorf("form.id(%s) not found", id)
+// 		httpRes.Header().Set("Content-Type", "text/plain")
+// 		http.Error(httpRes, fmt.Sprintf("unknown form id(%s)", id), http.StatusNotFound)
+// 		return
+// 	}
+// 	log.Debugf("Got res (%T)%+v", res, res)
+// 	form := res.(formsinterface.GetFormResponse).Form
 
-	switch httpReq.Method {
-	case http.MethodGet:
-		form.Header = renderHeaderHTML(form.Header)
-		for i, s := range form.Sections {
-			s.Header = renderHeaderHTML(s.Header)
-			for itemIndex, item := range s.Items {
-				if item.Header != nil {
-					*item.Header = renderHeaderHTML(*item.Header)
-				}
-				if item.Field != nil {
-					item.Field.Header = renderHeaderHTML(item.Field.Header)
-				}
-				if item.Image != nil {
-					item.Image.Header = renderHeaderHTML(item.Image.Header)
-				}
-				if item.Table != nil {
-					item.Table.Header = renderHeaderHTML(item.Table.Header)
-				}
-				if item.Sub != nil {
-					item.Sub.Header = renderHeaderHTML(item.Sub.Header)
-				}
-				s.Items[itemIndex] = item
-			} //for each item
-			form.Sections[i] = s
-		} //for each section
-		form.Action = fmt.Sprintf("/form/%s", form.ID)
-		showForm(form, httpRes)
-	case http.MethodPost:
-		if err := httpReq.ParseForm(); err != nil {
-			err = errors.Wrapf(err, "failed to parse the form data")
-			return
-		}
-		log.Debugf("form data: %+v", httpReq.PostForm)
-		if doc, err := postForm(context.Background() /*TODO*/, httpReq.PostForm); err != nil {
-			log.Errorf("failed to post: %+v", err)
-			err = errors.Wrapf(err, "failed to submit the form data")
-			showPage(ctx, errorTemplate, ErrorData{
-				Message: fmt.Sprintf("Failed to submit the document: %+s", err),
-			}, httpRes)
-			return
-		} else {
-			//show details of submitted documents
-			log.Debugf("Submitted: %+v", doc)
-			showPage(ctx, formSubmittedTemplate, doc, httpRes)
-		}
-	default:
-		http.Error(httpRes, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-} //formHandler()
+// 	switch httpReq.Method {
+// 	case http.MethodGet:
+// 		form.Header = renderHeaderHTML(form.Header)
+// 		for i, s := range form.Sections {
+// 			s.Header = renderHeaderHTML(s.Header)
+// 			for itemIndex, item := range s.Items {
+// 				if item.Header != nil {
+// 					*item.Header = renderHeaderHTML(*item.Header)
+// 				}
+// 				if item.Field != nil {
+// 					item.Field.Header = renderHeaderHTML(item.Field.Header)
+// 				}
+// 				if item.Image != nil {
+// 					item.Image.Header = renderHeaderHTML(item.Image.Header)
+// 				}
+// 				if item.Table != nil {
+// 					item.Table.Header = renderHeaderHTML(item.Table.Header)
+// 				}
+// 				if item.Sub != nil {
+// 					item.Sub.Header = renderHeaderHTML(item.Sub.Header)
+// 				}
+// 				s.Items[itemIndex] = item
+// 			} //for each item
+// 			form.Sections[i] = s
+// 		} //for each section
+// 		form.Action = fmt.Sprintf("/form/%s", form.ID)
+// 		showForm(form, httpRes)
+// 	case http.MethodPost:
+// 		if err := httpReq.ParseForm(); err != nil {
+// 			err = errors.Wrapf(err, "failed to parse the form data")
+// 			return
+// 		}
+// 		log.Debugf("form data: %+v", httpReq.PostForm)
+// 		if doc, err := postForm(context.Background() /*TODO*/, httpReq.PostForm); err != nil {
+// 			log.Errorf("failed to post: %+v", err)
+// 			err = errors.Wrapf(err, "failed to submit the form data")
+// 			showPage(ctx, errorTemplate, ErrorData{
+// 				Message: fmt.Sprintf("Failed to submit the document: %+s", err),
+// 			}, httpRes)
+// 			return
+// 		} else {
+// 			//show details of submitted documents
+// 			log.Debugf("Submitted: %+v", doc)
+// 			showPage(ctx, formSubmittedTemplate, doc, httpRes)
+// 		}
+// 	default:
+// 		http.Error(httpRes, "Method not allowed", http.StatusMethodNotAllowed)
+// 	}
+// } //formHandler()
 
-func campaignHandler(httpRes http.ResponseWriter, httpReq *http.Request) {
-	vars := mux.Vars(httpReq)
-	id := vars["id"]
-	ctx := context.Background()
-	res, err := msClient.Sync(
-		ctx,
-		ms.Address{
-			Domain:    formsDomain,
-			Operation: "get_campaign",
-		},
-		time.Millisecond*time.Duration(formsTTL),
-		formsinterface.GetCampaignRequest{
-			ID: id,
-		},
-		formsinterface.GetCampaignResponse{})
-	if err != nil {
-		log.Errorf("campaign.id(%s) not found", id)
-		httpRes.Header().Set("Content-Type", "text/plain")
-		http.Error(httpRes, fmt.Sprintf("unknown campaign id(%s)", id), http.StatusNotFound)
-		return
-	}
-	campaign := res.(formsinterface.GetCampaignResponse).Campaign
+// func campaignHandler(httpRes http.ResponseWriter, httpReq *http.Request) {
+// 	vars := mux.Vars(httpReq)
+// 	id := vars["id"]
+// 	ctx := context.Background()
+// 	res, err := msClient.Sync(
+// 		ctx,
+// 		ms.Address{
+// 			Domain:    formsDomain,
+// 			Operation: "get_campaign",
+// 		},
+// 		time.Millisecond*time.Duration(formsTTL),
+// 		formsinterface.GetCampaignRequest{
+// 			ID: id,
+// 		},
+// 		formsinterface.GetCampaignResponse{})
+// 	if err != nil {
+// 		log.Errorf("campaign.id(%s) not found", id)
+// 		httpRes.Header().Set("Content-Type", "text/plain")
+// 		http.Error(httpRes, fmt.Sprintf("unknown campaign id(%s)", id), http.StatusNotFound)
+// 		return
+// 	}
+// 	campaign := res.(formsinterface.GetCampaignResponse).Campaign
 
-	res, err = msClient.Sync(
-		ctx,
-		ms.Address{
-			Domain:    formsDomain,
-			Operation: "get_form",
-		},
-		time.Millisecond*time.Duration(formsTTL),
-		formsinterface.GetFormRequest{
-			ID: campaign.FormID,
-		},
-		formsinterface.GetFormResponse{})
-	if err != nil {
-		log.Errorf("campaign(%s).form(%s) not found", campaign.ID, campaign.FormID)
-		httpRes.Header().Set("Content-Type", "text/plain")
-		http.Error(httpRes, fmt.Sprintf("unknown form id(%s)", id), http.StatusNotFound)
-		return
-	}
-	form := res.(formsinterface.GetFormResponse).Form
-	if campaign.StartTime.After(time.Now()) {
-		log.Errorf("campaign(%s) only starts at %v", campaign.ID, campaign.StartTime)
-		httpRes.Header().Set("Content-Type", "text/plain")
-		http.Error(httpRes, fmt.Sprintf("campaign(%s) only starts at %v", campaign.ID, campaign.StartTime), http.StatusNotFound)
-		return
-	}
-	if campaign.EndTime.Before(time.Now()) {
-		log.Errorf("campaign(%s) ended at %v", campaign.ID, campaign.EndTime)
-		httpRes.Header().Set("Content-Type", "text/plain")
-		http.Error(httpRes, fmt.Sprintf("campaign(%s) ended at %v", campaign.ID, campaign.EndTime), http.StatusNotFound)
-		return
-	}
+// 	res, err = msClient.Sync(
+// 		ctx,
+// 		ms.Address{
+// 			Domain:    formsDomain,
+// 			Operation: "get_form",
+// 		},
+// 		time.Millisecond*time.Duration(formsTTL),
+// 		formsinterface.GetFormRequest{
+// 			ID: campaign.FormID,
+// 		},
+// 		formsinterface.GetFormResponse{})
+// 	if err != nil {
+// 		log.Errorf("campaign(%s).form(%s) not found", campaign.ID, campaign.FormID)
+// 		httpRes.Header().Set("Content-Type", "text/plain")
+// 		http.Error(httpRes, fmt.Sprintf("unknown form id(%s)", id), http.StatusNotFound)
+// 		return
+// 	}
+// 	form := res.(formsinterface.GetFormResponse).Form
+// 	if campaign.StartTime.After(time.Now()) {
+// 		log.Errorf("campaign(%s) only starts at %v", campaign.ID, campaign.StartTime)
+// 		httpRes.Header().Set("Content-Type", "text/plain")
+// 		http.Error(httpRes, fmt.Sprintf("campaign(%s) only starts at %v", campaign.ID, campaign.StartTime), http.StatusNotFound)
+// 		return
+// 	}
+// 	if campaign.EndTime.Before(time.Now()) {
+// 		log.Errorf("campaign(%s) ended at %v", campaign.ID, campaign.EndTime)
+// 		httpRes.Header().Set("Content-Type", "text/plain")
+// 		http.Error(httpRes, fmt.Sprintf("campaign(%s) ended at %v", campaign.ID, campaign.EndTime), http.StatusNotFound)
+// 		return
+// 	}
 
-	switch httpReq.Method {
-	case http.MethodGet:
-		form.Header = renderHeaderHTML(form.Header)
-		for i, s := range form.Sections {
-			s.Header = renderHeaderHTML(s.Header)
-			for itemIndex, item := range s.Items {
-				if item.Header != nil {
-					*item.Header = renderHeaderHTML(*item.Header)
-				}
-				if item.Field != nil {
-					item.Field.Header = renderHeaderHTML(item.Field.Header)
-				}
-				if item.Image != nil {
-					item.Image.Header = renderHeaderHTML(item.Image.Header)
-				}
-				if item.Table != nil {
-					item.Table.Header = renderHeaderHTML(item.Table.Header)
-				}
-				if item.Sub != nil {
-					item.Sub.Header = renderHeaderHTML(item.Sub.Header)
-				}
-				s.Items[itemIndex] = item
-			} //for each item
-			form.Sections[i] = s
-		} //for each section
-		form.Action = fmt.Sprintf("/campaign/%s", campaign.ID)
-		form.CampaignID = campaign.ID
-		showForm(form, httpRes)
-	case http.MethodPost:
-		if err := httpReq.ParseForm(); err != nil {
-			err = errors.Wrapf(err, "failed to parse the form data")
-			return
-		}
-		log.Debugf("form data: %+v", httpReq.PostForm)
-		if doc, err := postForm(context.Background() /*TODO*/, httpReq.PostForm); err != nil {
-			log.Errorf("failed to post: %+v", err)
-			err = errors.Wrapf(err, "failed to submit the form data")
-			showPage(ctx, errorTemplate, ErrorData{
-				Message: fmt.Sprintf("Failed to submit the document: %+s", err),
-			}, httpRes)
-			return
-		} else {
-			log.Debugf("Submitted: %+v", doc)
+// 	switch httpReq.Method {
+// 	case http.MethodGet:
+// 		form.Header = renderHeaderHTML(form.Header)
+// 		for i, s := range form.Sections {
+// 			s.Header = renderHeaderHTML(s.Header)
+// 			for itemIndex, item := range s.Items {
+// 				if item.Header != nil {
+// 					*item.Header = renderHeaderHTML(*item.Header)
+// 				}
+// 				if item.Field != nil {
+// 					item.Field.Header = renderHeaderHTML(item.Field.Header)
+// 				}
+// 				if item.Image != nil {
+// 					item.Image.Header = renderHeaderHTML(item.Image.Header)
+// 				}
+// 				if item.Table != nil {
+// 					item.Table.Header = renderHeaderHTML(item.Table.Header)
+// 				}
+// 				if item.Sub != nil {
+// 					item.Sub.Header = renderHeaderHTML(item.Sub.Header)
+// 				}
+// 				s.Items[itemIndex] = item
+// 			} //for each item
+// 			form.Sections[i] = s
+// 		} //for each section
+// 		form.Action = fmt.Sprintf("/campaign/%s", campaign.ID)
+// 		form.CampaignID = campaign.ID
+// 		showForm(form, httpRes)
+// 	case http.MethodPost:
+// 		if err := httpReq.ParseForm(); err != nil {
+// 			err = errors.Wrapf(err, "failed to parse the form data")
+// 			return
+// 		}
+// 		log.Debugf("form data: %+v", httpReq.PostForm)
+// 		if doc, err := postForm(context.Background() /*TODO*/, httpReq.PostForm); err != nil {
+// 			log.Errorf("failed to post: %+v", err)
+// 			err = errors.Wrapf(err, "failed to submit the form data")
+// 			showPage(ctx, errorTemplate, ErrorData{
+// 				Message: fmt.Sprintf("Failed to submit the document: %+s", err),
+// 			}, httpRes)
+// 			return
+// 		} else {
+// 			log.Debugf("Submitted: %+v", doc)
 
-			//send campaign notification
-			notification := formsinterface.CampaignNotification{
-				CampaingID: campaign.ID,
-				DocID:      doc.ID,
-			}
-			jsonNotification, _ := json.Marshal(notification)
-			if i64, err := redisClient.LPush(ctx, campaign.ID, jsonNotification).Result(); err != nil {
-				err = errors.Wrapf(err, "failed to send for processing")
-				log.Errorf("failed: %+v", err)
-				showPage(ctx, errorTemplate, ErrorData{
-					Message: fmt.Sprintf("Failed to send for processing: %+s", err),
-				}, httpRes)
-				return
-			} else {
-				log.Debugf("Pushed notification result %d", i64)
-			}
+// 			//send campaign notification
+// 			notification := formsinterface.CampaignNotification{
+// 				CampaingID: campaign.ID,
+// 				DocID:      doc.ID,
+// 			}
+// 			jsonNotification, _ := json.Marshal(notification)
+// 			if i64, err := redisClient.LPush(ctx, campaign.ID, jsonNotification).Result(); err != nil {
+// 				err = errors.Wrapf(err, "failed to send for processing")
+// 				log.Errorf("failed: %+v", err)
+// 				showPage(ctx, errorTemplate, ErrorData{
+// 					Message: fmt.Sprintf("Failed to send for processing: %+s", err),
+// 				}, httpRes)
+// 				return
+// 			} else {
+// 				log.Debugf("Pushed notification result %d", i64)
+// 			}
 
-			//show details of submitted documents
-			showPage(ctx, campaignSubmittedTemplate, map[string]interface{}{
-				"CampaignID": campaign.ID,
-			}, httpRes)
-		}
-	default:
-		http.Error(httpRes, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-} //campaignHandler()
+// 			//show details of submitted documents
+// 			showPage(ctx, campaignSubmittedTemplate, map[string]interface{}{
+// 				"CampaignID": campaign.ID,
+// 			}, httpRes)
+// 		}
+// 	default:
+// 		http.Error(httpRes, "Method not allowed", http.StatusMethodNotAllowed)
+// 	}
+// } //campaignHandler()
 
-func showForm(form forms.Form, httpRes http.ResponseWriter) {
-	//load template at runtime while designing...
-	//later comment out and use preloaded one only
-	formTemplate := loadTemplates([]string{"form", "page"})
+// func showForm(form forms.Form, httpRes http.ResponseWriter) {
+// 	//load template at runtime while designing...
+// 	//later comment out and use preloaded one only
+// 	formTemplate := loadTemplates([]string{"form", "page"})
 
-	//render the form into HTML and javascript
-	if err := formTemplate.ExecuteTemplate(httpRes, "page", form /*formData*/); err != nil {
-		log.Errorf("form(%s) rendering failed: %+v", form.ID, err)
-		httpRes.Header().Set("Content-Type", "text/plain")
-		http.Error(httpRes, fmt.Sprintf("form(%s) rendering failed: %+v", form.ID, err), http.StatusNotFound)
-		return
-	}
-}
+// 	//render the form into HTML and javascript
+// 	if err := formTemplate.ExecuteTemplate(httpRes, "page", form /*formData*/); err != nil {
+// 		log.Errorf("form(%s) rendering failed: %+v", form.ID, err)
+// 		httpRes.Header().Set("Content-Type", "text/plain")
+// 		http.Error(httpRes, fmt.Sprintf("form(%s) rendering failed: %+v", form.ID, err), http.StatusNotFound)
+// 		return
+// 	}
+// }
 
 func renderHeaderHTML(h forms.Header) forms.Header {
 	//generate HTML descriptions

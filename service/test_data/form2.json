@@ -1,0 +1,17 @@
+{
+    "form":{
+        "title":"Register",
+        "description":"Register for SMS notifications",
+        "sections":[
+            {
+                "name":"section_1",
+                "title":"Your Details",
+                "description":"",
+                "items":[
+                    {"field":{"title":"Name", "description":"", "name":"name", "short":{}}},
+                    {"field":{"title":"Phone", "description":"For example 0821234567", "name":"phone", "short":{}}}
+                ]
+            }
+        ]
+    }
+}

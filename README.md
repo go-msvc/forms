@@ -18,10 +18,29 @@ Note: to access the forms outside, need generic go-msvc api gateway to get it fr
 - Currently only displaying simple text inputs - regardless of type
 - All sections are rendered on one page
 
+- 2023-03-11
+- Created micro-service to manage forms (using simple local file system)
+- Added micro-service call to web to fetch form from the micro-service
 
 ## Next ##
-- Form submit mechanism - need to store the submitted data somewhere as a JSON doc
-- then validation and a few more types of fields (int at least and choices/selections)
+- Template: When only one section - do not show the tabs
+- When only one section, section.name is not required
+- Form validate: all fields must have unique names in scope
+- Create micro-service operations to store documents
+- Call that from the web
+- Allow existing document to be opened for editing and submit new version of document
+
+- Add basic field validation
+- Add basic display options
+- Send notifications and consume
+- Support for user scripts - compile into go code? or see if can execute python code? Handle exceptions!
+
+## Apps ##
+- campaigns: form start/end-time, limited submits, ... build this outside the form, e.g. in a "campaign" and expose the form then using a name, rather than the id, and let the URL be like a multi-folder path name to make hierarchies
+
+- Move data into a database - SQL for foreign key and lookup and object for the nested data
+
+
 - Link that to the micro-service to get the form spec and to store the form data
 - Form cancel must go somewhere or just remove the button? But rather keep it, then also add buttons to [Save] or [Undo] changes or [Reset], or [Start another entry] etc...
 

@@ -1,10 +1,15 @@
 package forms
 
-import "github.com/go-msvc/errors"
+import (
+	"time"
+
+	"github.com/go-msvc/errors"
+)
 
 type Form struct {
-	ID  string `json:"id,omitempty"`
-	Rev int    `json:"rev,omitempty"`
+	ID        string    `json:"id,omitempty" doc:"Unique ID assigned when the form is created"`
+	Rev       int       `json:"rev,omitempty" doc:"Revision count form updates 1,2,3,..."`
+	Timestamp time.Time `json:"timestamp" doc:"Time when the form revision was created"`
 	Header
 	Sections []Section `json:"sections,omitempty" doc:"Each section displays as another tab/page to be filled and user can navigate to next/prev."`
 }

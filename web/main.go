@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/go-msvc/errors"
@@ -73,8 +74,10 @@ func httpLogger(h http.Handler) http.Handler {
 
 // var pageTemplate *template.Template
 var (
-	pageTemplate map[string]*template.Template
-	formTemplate *template.Template
+	pageTemplate         map[string]*template.Template
+	formTemplate         *template.Template
+	submittedDocTemplate *template.Template
+	errorTemplate        *template.Template
 )
 
 func loadResources() {
@@ -83,6 +86,8 @@ func loadResources() {
 	pageTemplate["login"] = loadTemplates([]string{"login", "page"})
 
 	formTemplate = loadTemplates([]string{"form", "page"})
+	submittedDocTemplate = loadTemplates([]string{"submitted", "page"})
+	errorTemplate = loadTemplates([]string{"error", "page"})
 }
 
 func loadTemplates(templateNames []string) *template.Template {
@@ -109,6 +114,7 @@ func page(pageName string) http.HandlerFunc {
 		var err error
 		// var internalSession internal.Session
 		defer func() {
+			log.Errorf("err=%+v", err)
 			//update internal session (todo: only if modified)
 			// if sessionErr := updateInternalSession(internalSession); sessionErr != nil {
 			// 	err = errors.Wrapf(sessionErr, "failed to write internal session")
@@ -120,6 +126,7 @@ func page(pageName string) http.HandlerFunc {
 			}
 
 			if err != nil {
+				log.Errorf("Failed: %+v", err)
 				http.Error(httpRes, fmt.Sprintf("failed: %v", err), http.StatusInternalServerError)
 				return
 			}
@@ -181,35 +188,100 @@ func page(pageName string) http.HandlerFunc {
 
 		switch httpReq.Method {
 		case http.MethodGet:
-			log.Debugf("rendering %s ...", pageName)
-			showPage(ctx, pt, httpRes)
-			log.Debugf("rendered %s ...", pageName)
+			showPage(ctx, pt, nil, httpRes)
 		case http.MethodPost:
 			if err = httpReq.ParseForm(); err != nil {
 				err = errors.Wrapf(err, "failed to parse the form data")
 				return
 			}
 			log.Debugf("form data: %+v", httpReq.PostForm)
-			postForm(ctx, httpReq.PostForm)
+			if doc, err := postForm(ctx, httpReq.PostForm); err != nil {
+				log.Errorf("failed to post: %+v", err)
+				err = errors.Wrapf(err, "failed to submit the form data")
+				return
+			} else {
+				//show details of submitted documents
+				log.Debugf("Submitted: %+v", doc)
+				docData := map[string]interface{}{
+					"ID":        doc.ID,
+					"Rev":       doc.Rev,
+					"Timestamp": doc.Timestamp,
+					"FormID":    doc.FormID,
+				}
+				showPage(ctx, submittedDocTemplate, docData, httpRes)
+			}
 		default:
 			err = errors.Errorf("method not supported")
 		}
 	}
 } //page()
 
-func showPage(ctx context.Context, t *template.Template, httpRes http.ResponseWriter) {
+func showPage(ctx context.Context, t *template.Template, data any, httpRes http.ResponseWriter) {
 	httpRes.Header().Set("Content-Type", "text/html")
 	log.Debugf("t=%+v", t)
-	if err := renderPage(httpRes, t, nil); err != nil {
+	if err := renderPage(httpRes, t, data); err != nil {
 		http.Error(httpRes, fmt.Sprintf("failed: %+v", err), http.StatusInternalServerError)
 		return
 	}
 }
 
-func postForm(ctx context.Context, values url.Values) {
-	//values := map[string]interface{}{} //todo... get from ?
-
+func postForm(ctx context.Context, values url.Values) (forms.Doc, error) {
 	log.Debugf("submitForm: %+v", values)
+
+	//todo: security should include doc token fetched from db, to restrict update
+
+	//get form id and revision
+	formID := values.Get("form_id")
+	formRevStr := values.Get("form_rev")
+	if formID == "" || formRevStr == "" {
+		log.Errorf("1")
+		return forms.Doc{}, errors.Errorf("missing form id/rev")
+	}
+	formRev, err := strconv.ParseInt(formRevStr, 10, 64)
+	if err != nil {
+		log.Errorf("1")
+		return forms.Doc{}, errors.Wrapf(err, "invalid form rev(%s)", formRevStr)
+	}
+
+	log.Debugf("submit form.id(%s).rev(%v)", formID, formRev)
+	//get doc id (if editing existing doc)
+	// docID := values["doc_id"]
+	// docRev := values["doc_rev"]
+	//...todo: if defined - do upd_doc instead of add_doc
+
+	doc := forms.Doc{
+		FormID:  formID,
+		FormRev: int(formRev),
+		//ID:      docID,
+		Data: map[string]interface{}{},
+	}
+	for n, v := range values {
+		//use switch to skip the fields that are not part of the document
+		//todo: remove later when these are managed in context
+		switch n {
+		case "form_id":
+		case "form_rev":
+		case "doc_id":
+		case "doc_rev":
+		default:
+			doc.Data[n] = v
+		}
+	}
+
+	//use ms client to store the document
+	res, err := msClient.Sync(
+		ctx,
+		ms.Address{
+			Domain:    formsDomain,
+			Operation: "add_doc",
+		},
+		time.Millisecond*time.Duration(formsTTL),
+		formsinterface.AddDocRequest{Doc: doc},
+		formsinterface.AddDocResponse{})
+	if err != nil {
+		return forms.Doc{}, errors.Wrapf(err, "failed to create document")
+	}
+	return res.(formsinterface.AddDocResponse).Doc, nil
 }
 
 func defaultHandler(httpRes http.ResponseWriter, httpReq *http.Request) {
@@ -221,7 +293,7 @@ func defaultHandler(httpRes http.ResponseWriter, httpReq *http.Request) {
 	}
 }
 
-func renderPage(w io.Writer, t *template.Template, data map[string]interface{}) error {
+func renderPage(w io.Writer, t *template.Template, data any) error {
 	if err := t.ExecuteTemplate(w, "page", data); err != nil {
 		return errors.Wrapf(err, "failed to exec template")
 	}
@@ -275,80 +347,28 @@ var apiURL = "http://localhost:12345"
 // 	return s, nil
 // }
 
-// func updateInternalSession(s internal.Session) error {
-// 	url := apiURL + "/sessions/" + s.ID
-// 	jsonSession, err := json.Marshal(s)
-// 	if err != nil {
-// 		return errors.Wrapf(err, "failed to encode internal session")
-// 	}
-// 	httpReq, _ := http.NewRequest(http.MethodPut, url, bytes.NewReader(jsonSession))
-// 	httpReq.Header.Set("Content-Type", "application/json")
-// 	if _, err = http.DefaultClient.Do(httpReq); err != nil {
-// 		return errors.Wrapf(err, "failed to update internal session")
-// 	}
-// 	return nil
-// }
-
-var (
-	testForms = map[string]forms.Form{
-		"1": {
-			ID:     "1",
-			Header: forms.Header{Title: "FormTitle1", Description: "FormDesc1"},
-			Sections: []forms.Section{
-				{
-					FirstSection: true,
-					Name:         "sec_1",
-					Header:       forms.Header{Title: "Section 1", Description: "This is section 1..."},
-					Items: []forms.Item{
-						{Field: &forms.Field{Header: forms.Header{Title: "Field1", Description: "Short text entry"}, Name: "field_1", Short: &forms.Short{}}},
-						{Field: &forms.Field{Header: forms.Header{Title: "Field2", Description: "Another short text entry"}, Name: "field_2", Short: &forms.Short{}}},
-						{Field: &forms.Field{Header: forms.Header{Title: "Field3", Description: "FieldDesc2"}, Name: "field_3", Integer: &forms.Integer{}}},
-						{Field: &forms.Field{Header: forms.Header{Title: "Field4", Description: "FieldDesc2"}, Name: "field_4", Number: &forms.Number{}}},
-						{Field: &forms.Field{Header: forms.Header{Title: "Field5", Description: "FieldDesc2"}, Name: "field_5", Choice: &forms.Choice{}}},
-						{Field: &forms.Field{Header: forms.Header{Title: "Field6", Description: "FieldDesc2"}, Name: "field_6", Selection: &forms.Selection{}}},
-						{Field: &forms.Field{Header: forms.Header{Title: "Field7", Description: "FieldDesc2"}, Name: "field_7", Text: &forms.Text{}}},
-						{Field: &forms.Field{Header: forms.Header{Title: "Field8", Description: "FieldDesc2"}, Name: "field_8", Date: &forms.Date{}}},
-						{Field: &forms.Field{Header: forms.Header{Title: "Field9", Description: "FieldDesc2"}, Name: "field_9", Time: &forms.Time{}}},
-						{Field: &forms.Field{Header: forms.Header{Title: "Field10", Description: "FieldDesc2"}, Name: "field_10", Duration: &forms.Duration{}}},
-						{Header: &forms.Header{Title: "header line", Description: "with a short description..."}},
-						{Image: &forms.Image{}},
-						{Table: &forms.Table{}},
-						{Sub: &forms.Sub{}},
-					},
-				},
-				{
-					Name:   "sec_2",
-					Header: forms.Header{Title: "Section 2", Description: "This is section 2..."},
-					Items: []forms.Item{
-						{Field: &forms.Field{Header: forms.Header{Title: "Field1", Description: "FieldDesc1"}, Name: "field_1", Short: &forms.Short{}}},
-						{Field: &forms.Field{Header: forms.Header{Title: "Field2", Description: "FieldDesc2"}, Name: "field_2", Short: &forms.Short{}}},
-					},
-				},
-			},
-		},
-	}
-)
-
-type formTemplateData struct {
-	Title       string
-	Description string
-	Sections    []formTemplateSection
+type ErrorData struct {
+	Message string
 }
 
-type formTemplateSection struct {
-	Title       string
-	Description string
-	Items       []formTemplateItem
-}
-
-type formTemplateItem struct {
-}
-
+//	func updateInternalSession(s internal.Session) error {
+//		url := apiURL + "/sessions/" + s.ID
+//		jsonSession, err := json.Marshal(s)
+//		if err != nil {
+//			return errors.Wrapf(err, "failed to encode internal session")
+//		}
+//		httpReq, _ := http.NewRequest(http.MethodPut, url, bytes.NewReader(jsonSession))
+//		httpReq.Header.Set("Content-Type", "application/json")
+//		if _, err = http.DefaultClient.Do(httpReq); err != nil {
+//			return errors.Wrapf(err, "failed to update internal session")
+//		}
+//		return nil
+//	}
 func formHandler(httpRes http.ResponseWriter, httpReq *http.Request) {
 	vars := mux.Vars(httpReq)
 	id := vars["id"]
 
-	//us ms client to fetch the form
+	//use ms client to fetch the form
 	//ms-client use one id for context, request and own domain, as it does only one request then terminates
 	ctx := context.Background()
 	res, err := msClient.Sync(
@@ -371,14 +391,6 @@ func formHandler(httpRes http.ResponseWriter, httpReq *http.Request) {
 	log.Debugf("Got res (%T)%+v", res, res)
 	form := res.(formsinterface.GetFormResponse).Form
 
-	// form, ok := testForms[id]
-	// if !ok {
-	// 	log.Errorf("form.id(%s) not found", id)
-	// 	httpRes.Header().Set("Content-Type", "text/plain")
-	// 	http.Error(httpRes, fmt.Sprintf("unknown form id(%s)", id), http.StatusNotFound)
-	// 	return
-	// }
-
 	switch httpReq.Method {
 	case http.MethodGet:
 		showForm(form, httpRes)
@@ -388,27 +400,24 @@ func formHandler(httpRes http.ResponseWriter, httpReq *http.Request) {
 			return
 		}
 		log.Debugf("form data: %+v", httpReq.PostForm)
-		postForm(context.Background() /*TODO*/, httpReq.PostForm)
+		if doc, err := postForm(context.Background() /*TODO*/, httpReq.PostForm); err != nil {
+			log.Errorf("failed to post: %+v", err)
+			err = errors.Wrapf(err, "failed to submit the form data")
+			showPage(ctx, errorTemplate, ErrorData{
+				Message: fmt.Sprintf("Failed to submit the document: %+s", err),
+			}, httpRes)
+			return
+		} else {
+			//show details of submitted documents
+			log.Debugf("Submitted: %+v", doc)
+			showPage(ctx, submittedDocTemplate, doc, httpRes)
+		}
 	default:
 		http.Error(httpRes, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
-func showForm(form forms.Form, httpRes http.ResponseWriter) { //httpRes http.ResponseWriter, httpReq *http.Request)
-	//prepare data used by the template to render the form
-	// formData := formTemplateData{
-	// 	Title:       form.Header.Title,
-	// 	Description: form.Header.Description,
-	// 	Sections:    []formTemplateSection{},
-	// }
-	// for _, s := range form.Sections {
-	// 	fs := formTemplateSection{
-	// 		Title:       s.Header.Title,
-	// 		Description: s.Header.Description,
-	// 	}
-	// 	formData.Sections = append(formData.Sections, fs)
-	// }
-
+func showForm(form forms.Form, httpRes http.ResponseWriter) {
 	//load template at runtime while designing...
 	//later comment out and use preloaded one only
 	formTemplate := loadTemplates([]string{"form", "page"})

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/go-msvc/errors"
 	"github.com/go-msvc/forms"
@@ -33,6 +34,7 @@ func addForm(ctx context.Context, req formsinterface.AddFormRequest) (*formsinte
 	}
 	req.Form.ID = uuid.New().String()
 	req.Form.Rev = 1
+	req.Form.Timestamp = time.Now()
 
 	if err := saveForm(req.Form); err != nil {
 		return nil, errors.Wrapf(err, "failed to save form")
@@ -68,6 +70,7 @@ func updForm(ctx context.Context, req formsinterface.UpdFormRequest) (*formsinte
 		return nil, errors.Wrapf(err, "failed to load existing form")
 	}
 	req.Form.Rev = existingForm.Rev + 1
+	req.Form.Timestamp = time.Now()
 	if err := saveForm(req.Form); err != nil {
 		return nil, errors.Wrapf(err, "failed to save form")
 	}

@@ -14,6 +14,11 @@ func main() {
 		ms.WithOper("upd_form", updForm),
 		ms.WithOper("del_form", delForm),
 		ms.WithOper("find_forms", findForm),
+		ms.WithOper("add_doc", addDoc),
+		ms.WithOper("get_doc", getDoc),
+		ms.WithOper("upd_doc", updDoc),
+		ms.WithOper("del_doc", delDoc),
+		ms.WithOper("find_docs", findDoc),
 	)
 	if err := config.Load(); err != nil {
 		panic(err)

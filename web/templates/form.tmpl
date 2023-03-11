@@ -36,13 +36,15 @@ function openSection(evt, sectionName) {
       {{if .Description}}<p>{{.Description}}</p>{{end}}
     </div>
 
-    <!-- all sections display in a tab -->
+    <!-- with multiple sections, all sections display in a tab -->
+    {{ $nrSections := len .Sections }} {{ if gt $nrSections 1 }}
     <!-- nav bar at the top to control which tab to display -->
     <div class="tab">
       {{range $section := .Sections}}
         <button class="tablinks {{if $section.FirstSection}}active{{end}}" onclick="openSection(event, {{$section.Name}})">{{$section.Name}}</button>
       {{end}}
     </div>
+    {{end}}
 
     <!-- Tab content for each section -->
     {{range $section := .Sections}}

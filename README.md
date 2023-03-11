@@ -27,6 +27,7 @@ Note: to access the forms outside, need generic go-msvc api gateway to get it fr
 
 ## Next ##
 - Template: Field description as hint when hover over field
+- Form Template must use java script to validate forms while filled in
 - Template: When only one section - do not show the tabs
 - When only one section, section.name is not required
 - Form validate: all fields must have unique names in scope

@@ -1,0 +1,88 @@
+{{define "head"}}<title>Form Title TODO</title>{{end}}
+{{define "body"}}
+
+  <script>
+function openSection(evt, sectionName) {
+  // Declare all variables
+  var i, tabcontent, tablinks;
+
+  // Get all elements with class="tabcontent" and hide them
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+
+  // Get all elements with class="tablinks" and remove the class "active"
+  tablinks = document.getElementsByClassName("tablinks");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+
+  // Show the current tab, and add an "active" class to the button that opened the tab
+  document.getElementById(sectionName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+  </script>
+
+  <form class="modal-content animate" action="/form/{{.ID}}" method="POST">
+    <!-- form header -->
+    <div class="container">
+      <h1>{{.Title}}</h1>
+      {{if .Description}}<p>{{.Description}}</p>{{end}}
+    </div>
+
+    <!-- all sections display in a tab -->
+    <!-- nav bar at the top to control which tab to display -->
+    <div class="tab">
+      {{range $section := .Sections}}
+        <button class="tablinks {{if $section.FirstSection}}active{{end}}" onclick="openSection(event, {{$section.Name}})">{{$section.Name}}</button>
+      {{end}}
+    </div>
+
+    <!-- Tab content for each section -->
+    {{range $section := .Sections}}
+    <div id="{{$section.Name}}" class="tabcontent"
+      {{if $section.FirstSection}}style="display: block"
+      {{else}}style="display: none"
+      {{end}}
+      >
+      <h2>{{$section.Title}}</h2>
+      {{if $section.Description}}<p>{{$section.Description}}</p>{{end}}
+
+      <!-- all items in the section -->
+      {{range $item := $section.Items}}
+        {{if $field := $item.Field}}
+          <label for="uname"><b>{{$field.Title}}</b></label>
+          <input type="text" placeholder="Enter {{$field.Title}}" name="{{$section.Name}}__{{$field.Name}}" required>
+        {{else if $header := $item.Header}}
+          <h3>{{$header.Title}}</h3>
+          {{if $header.Description}}<p>{{$header.Description}}</p>{{end}}
+        {{else if $image := $item.Image}}
+          <div class="imgcontainer">
+            <img src="/resources/images/img_avatar2.png" alt="Avatar" class="centered">
+          </div>
+        {{else if $table := $item.Table}}
+          <p>TODO: Unsupported table item</p>
+        {{else if $sub := $item.Sub}}
+          <p>TODO: Unsupported sub item</p>
+        {{else}}
+          <p>TODO: Unsupported item</p>
+        {{end}}
+      {{end}}
+    </div>
+    {{end}}
+
+    <div class="container">
+      <button type="submit" class="submitbtn">Submit</button>
+      <!--label>
+        <input type="checkbox" checked="checked" name="remember"> Remember me
+      </label-->
+    </div>
+
+    <div class="container" style="background-color:#f1f1f1">
+      <button type="button" onclick="document.getElementById('id01').style.display='none'" class="cancelbtn">Cancel</button>
+      <!--span class="psw">Forgot <a href="#">password?</a></span-->
+    </div>
+  </form>
+
+{{end}}

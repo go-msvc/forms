@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-msvc/errors"
+	"github.com/go-msvc/forms"
 	"github.com/go-msvc/logger"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -26,7 +27,8 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/home", page("home"))
 	r.HandleFunc("/login", page("login"))
-	r.HandleFunc("/", defaultHandler)
+	r.HandleFunc("/form/{id}", formHandler) //page("form"))
+	r.HandleFunc("/", page("home"))         //defaultHandler)
 	http.Handle("/", r)
 
 	//fileServer serves static files such as style sheets from the ./resources folder
@@ -48,12 +50,15 @@ func httpLogger(h http.Handler) http.Handler {
 // var pageTemplate *template.Template
 var (
 	pageTemplate map[string]*template.Template
+	formTemplate *template.Template
 )
 
 func loadResources() {
 	pageTemplate = make(map[string]*template.Template)
 	pageTemplate["home"] = loadTemplates([]string{"home", "page"})
 	pageTemplate["login"] = loadTemplates([]string{"login", "page"})
+
+	formTemplate = loadTemplates([]string{"form", "page"})
 }
 
 func loadTemplates(templateNames []string) *template.Template {
@@ -259,3 +264,112 @@ var apiURL = "http://localhost:12345"
 // 	}
 // 	return nil
 // }
+
+var (
+	testForms = map[string]forms.Form{
+		"1": {
+			ID:     "1",
+			Header: forms.Header{Title: "FormTitle1", Description: "FormDesc1"},
+			Sections: []forms.Section{
+				{
+					FirstSection: true,
+					Name:         "sec_1",
+					Header:       forms.Header{Title: "Section 1", Description: "This is section 1..."},
+					Items: []forms.Item{
+						{Field: &forms.Field{Header: forms.Header{Title: "Field1", Description: "Short text entry"}, Name: "field_1", Short: &forms.Short{}}},
+						{Field: &forms.Field{Header: forms.Header{Title: "Field2", Description: "Another short text entry"}, Name: "field_2", Short: &forms.Short{}}},
+						{Field: &forms.Field{Header: forms.Header{Title: "Field3", Description: "FieldDesc2"}, Name: "field_3", Integer: &forms.Integer{}}},
+						{Field: &forms.Field{Header: forms.Header{Title: "Field4", Description: "FieldDesc2"}, Name: "field_4", Number: &forms.Number{}}},
+						{Field: &forms.Field{Header: forms.Header{Title: "Field5", Description: "FieldDesc2"}, Name: "field_5", Choice: &forms.Choice{}}},
+						{Field: &forms.Field{Header: forms.Header{Title: "Field6", Description: "FieldDesc2"}, Name: "field_6", Selection: &forms.Selection{}}},
+						{Field: &forms.Field{Header: forms.Header{Title: "Field7", Description: "FieldDesc2"}, Name: "field_7", Text: &forms.Text{}}},
+						{Field: &forms.Field{Header: forms.Header{Title: "Field8", Description: "FieldDesc2"}, Name: "field_8", Date: &forms.Date{}}},
+						{Field: &forms.Field{Header: forms.Header{Title: "Field9", Description: "FieldDesc2"}, Name: "field_9", Time: &forms.Time{}}},
+						{Field: &forms.Field{Header: forms.Header{Title: "Field10", Description: "FieldDesc2"}, Name: "field_10", Duration: &forms.Duration{}}},
+						{Header: &forms.Header{Title: "header line", Description: "with a short description..."}},
+						{Image: &forms.Image{}},
+						{Table: &forms.Table{}},
+						{Sub: &forms.Sub{}},
+					},
+				},
+				{
+					Name:   "sec_2",
+					Header: forms.Header{Title: "Section 2", Description: "This is section 2..."},
+					Items: []forms.Item{
+						{Field: &forms.Field{Header: forms.Header{Title: "Field1", Description: "FieldDesc1"}, Name: "field_1", Short: &forms.Short{}}},
+						{Field: &forms.Field{Header: forms.Header{Title: "Field2", Description: "FieldDesc2"}, Name: "field_2", Short: &forms.Short{}}},
+					},
+				},
+			},
+		},
+	}
+)
+
+type formTemplateData struct {
+	Title       string
+	Description string
+	Sections    []formTemplateSection
+}
+
+type formTemplateSection struct {
+	Title       string
+	Description string
+	Items       []formTemplateItem
+}
+
+type formTemplateItem struct {
+}
+
+func formHandler(httpRes http.ResponseWriter, httpReq *http.Request) {
+	vars := mux.Vars(httpReq)
+	id := vars["id"]
+	form, ok := testForms[id]
+	if !ok {
+		log.Errorf("form.id(%s) not found", id)
+		httpRes.Header().Set("Content-Type", "text/plain")
+		http.Error(httpRes, fmt.Sprintf("unknown form id(%s)", id), http.StatusNotFound)
+		return
+	}
+
+	switch httpReq.Method {
+	case http.MethodGet:
+		showForm(form, httpRes)
+	case http.MethodPost:
+		if err := httpReq.ParseForm(); err != nil {
+			err = errors.Wrapf(err, "failed to parse the form data")
+			return
+		}
+		log.Debugf("form data: %+v", httpReq.PostForm)
+		postForm(context.Background() /*TODO*/, httpReq.PostForm)
+	default:
+		http.Error(httpRes, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func showForm(form forms.Form, httpRes http.ResponseWriter) { //httpRes http.ResponseWriter, httpReq *http.Request)
+	//prepare data used by the template to render the form
+	// formData := formTemplateData{
+	// 	Title:       form.Header.Title,
+	// 	Description: form.Header.Description,
+	// 	Sections:    []formTemplateSection{},
+	// }
+	// for _, s := range form.Sections {
+	// 	fs := formTemplateSection{
+	// 		Title:       s.Header.Title,
+	// 		Description: s.Header.Description,
+	// 	}
+	// 	formData.Sections = append(formData.Sections, fs)
+	// }
+
+	//load template at runtime while designing...
+	//later comment out and use preloaded one only
+	formTemplate := loadTemplates([]string{"form", "page"})
+
+	//render the form into HTML and javascript
+	if err := formTemplate.ExecuteTemplate(httpRes, "page", form /*formData*/); err != nil {
+		log.Errorf("form(%s) rendering failed: %+v", form.ID, err)
+		httpRes.Header().Set("Content-Type", "text/plain")
+		http.Error(httpRes, fmt.Sprintf("form(%s) rendering failed: %+v", form.ID, err), http.StatusNotFound)
+		return
+	}
+}

@@ -87,10 +87,11 @@ func httpLogger(h http.Handler) http.Handler {
 
 // var pageTemplate *template.Template
 var (
-	pageTemplate         map[string]*template.Template
-	formTemplate         *template.Template
-	submittedDocTemplate *template.Template
-	errorTemplate        *template.Template
+	pageTemplate              map[string]*template.Template
+	formTemplate              *template.Template
+	formSubmittedTemplate     *template.Template
+	campaignSubmittedTemplate *template.Template
+	errorTemplate             *template.Template
 )
 
 func loadResources() {
@@ -99,7 +100,8 @@ func loadResources() {
 	pageTemplate["login"] = loadTemplates([]string{"login", "page"})
 
 	formTemplate = loadTemplates([]string{"form", "page"})
-	submittedDocTemplate = loadTemplates([]string{"submitted", "page"})
+	formSubmittedTemplate = loadTemplates([]string{"form-submitted", "page"})
+	campaignSubmittedTemplate = loadTemplates([]string{"campaign-submitted", "page"})
 	errorTemplate = loadTemplates([]string{"error", "page"})
 }
 
@@ -255,7 +257,6 @@ func postForm(ctx context.Context, values url.Values) (forms.Doc, error) {
 		log.Errorf("1")
 		return forms.Doc{}, errors.Wrapf(err, "invalid form rev(%s)", formRevStr)
 	}
-
 	log.Debugf("submit form.id(%s).rev(%v)", formID, formRev)
 	//get doc id (if editing existing doc)
 	// docID := values["doc_id"]
@@ -272,6 +273,7 @@ func postForm(ctx context.Context, values url.Values) (forms.Doc, error) {
 		//use switch to skip the fields that are not part of the document
 		//todo: remove later when these are managed in context
 		switch n {
+		case "campaign_id":
 		case "form_id":
 		case "form_rev":
 		case "doc_id":
@@ -447,7 +449,7 @@ func formHandler(httpRes http.ResponseWriter, httpReq *http.Request) {
 		} else {
 			//show details of submitted documents
 			log.Debugf("Submitted: %+v", doc)
-			showPage(ctx, submittedDocTemplate, doc, httpRes)
+			showPage(ctx, formSubmittedTemplate, doc, httpRes)
 		}
 	default:
 		http.Error(httpRes, "Method not allowed", http.StatusMethodNotAllowed)
@@ -534,6 +536,7 @@ func campaignHandler(httpRes http.ResponseWriter, httpReq *http.Request) {
 			form.Sections[i] = s
 		} //for each section
 		form.Action = fmt.Sprintf("/campaign/%s", campaign.ID)
+		form.CampaignID = campaign.ID
 		showForm(form, httpRes)
 	case http.MethodPost:
 		if err := httpReq.ParseForm(); err != nil {
@@ -556,7 +559,6 @@ func campaignHandler(httpRes http.ResponseWriter, httpReq *http.Request) {
 				CampaingID: campaign.ID,
 				DocID:      doc.ID,
 			}
-			log.Errorf("NOT YET SENDING Notification to %s: %+v", campaign.ID, notification)
 			jsonNotification, _ := json.Marshal(notification)
 			if i64, err := redisClient.LPush(ctx, campaign.ID, jsonNotification).Result(); err != nil {
 				err = errors.Wrapf(err, "failed to send for processing")
@@ -570,7 +572,9 @@ func campaignHandler(httpRes http.ResponseWriter, httpReq *http.Request) {
 			}
 
 			//show details of submitted documents
-			showPage(ctx, submittedDocTemplate, doc, httpRes)
+			showPage(ctx, campaignSubmittedTemplate, map[string]interface{}{
+				"CampaignID": campaign.ID,
+			}, httpRes)
 		}
 	default:
 		http.Error(httpRes, "Method not allowed", http.StatusMethodNotAllowed)

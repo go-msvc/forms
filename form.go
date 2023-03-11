@@ -15,8 +15,9 @@ type Form struct {
 	Rev       int       `json:"rev,omitempty" doc:"Revision count form updates 1,2,3,..."`
 	Timestamp time.Time `json:"timestamp" doc:"Time when the form revision was created"`
 	Header
-	Sections []Section `json:"sections,omitempty" doc:"Each section displays as another tab/page to be filled and user can navigate to next/prev."`
-	Action   string    `json:"-" doc:"Set at run-time"`
+	Sections   []Section `json:"sections,omitempty" doc:"Each section displays as another tab/page to be filled and user can navigate to next/prev."`
+	Action     string    `json:"-" doc:"Used at run-time"`
+	CampaignID string    `json:"-" doc:"Used at run-time"`
 }
 
 func (f *Form) Validate() error {

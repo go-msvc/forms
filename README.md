@@ -28,6 +28,7 @@ Note: to access the forms outside, need generic go-msvc api gateway to get it fr
 - Added campaign to the service and to web, but web wait for redisClient to send a notification
 
 ## Next ##
+- Move form.tmpl hidden fields into internal context/cookie...
 - Add campaigns to control document substitution and notification sending ...
 - Consume notifications
 - Template: Field description as hint when hover over field

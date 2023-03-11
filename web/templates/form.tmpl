@@ -57,8 +57,50 @@ function openSection(evt, sectionName) {
       <!-- all items in the section -->
       {{range $item := $section.Items}}
         {{if $field := $item.Field}}
-          <label for="uname"><b>{{$field.Title}}</b></label>
-          <input type="text" placeholder="Enter {{$field.Title}}" name="{{$section.Name}}__{{$field.Name}}" required>
+          <label for="{{$section.Name}}__{{$field.Name}}"><b>{{$field.Title}}</b></label>
+          {{if $field.Short}}
+            <input type="text" id="{{$section.Name}}__{{$field.Name}}" placeholder="Enter {{$field.Title}}" name="{{$section.Name}}__{{$field.Name}}" required>
+          {{else if $field.Integer}}
+            <input type="text" id="{{$section.Name}}__{{$field.Name}}" placeholder="Enter integer number for {{$field.Title}}" name="{{$section.Name}}__{{$field.Name}}" required>
+          {{else if $field.Number}}
+            <input type="text" id="{{$section.Name}}__{{$field.Name}}" placeholder="Enter number for {{$field.Title}}" name="{{$section.Name}}__{{$field.Name}}" required>
+          {{else if $field.Text}}
+            <textarea id="{{$section.Name}}__{{$field.Name}}" placeholder="Enter text for {{$field.Title}}" name="{{$section.Name}}__{{$field.Name}}" rows="4" cols="50" required>current value...</textarea>
+          {{else if $field.Date}}
+            <div class="optionsGroupBelow">
+              <input type="date" id="{{$section.Name}}__{{$field.Name}}" _placeholder="YYYY-MM-DD" name="{{$section.Name}}__{{$field.Name}}"
+              {{if $field.Date.Min}} min="{{$field.Date.Min}}"{{end}}
+              {{if $field.Date.Max}} max="{{$field.Date.Max}}"{{end}}
+              required>
+            </div>
+          {{else if $field.Time}}
+            <div class="optionsGroupBelow">
+              <input type="time" id="{{$section.Name}}__{{$field.Name}}" placeholder="HH:MM" name="{{$section.Name}}__{{$field.Name}}"
+              {{if $field.Time.Min}} min="{{$field.Time.Min}}"{{end}}
+              {{if $field.Time.Max}} max="{{$field.Time.Max}}"{{end}}
+              required>
+            </div>
+          {{else if $field.Duration}}
+            <input type="text" id="{{$section.Name}}__{{$field.Name}}" placeholder="1s, 2m, 3h, 4d, 5mo, or 6y" name="{{$section.Name}}__{{$field.Name}}" required>
+          {{else if $field.Choice}}
+            <div class="optionsGroupBelow">
+              {{range $option := $field.Choice.Options}}
+              <div>
+                <input type="radio" id="{{$section.Name}}__{{$field.Name}}_{{$option.Value}}" name="{{$section.Name}}__{{$field.Name}}" value="{{$option.Value}}">
+                <label for="{{$option.Value}}">{{$option.Title}}</label><br>
+              </div>
+              {{end}}
+            </div>
+          {{else if $field.Selection}}
+            <div class="optionsGroupBelow">
+              {{range $option := $field.Selection.Options}}
+                <input type="checkbox" id="{{$section.Name}}__{{$field.Name}}_{{$option.Value}}" name="{{$section.Name}}__{{$field.Name}}" value="{{$option.Value}}">
+                <label for="{{$option.Value}}">{{$option.Title}}</label><br>
+              {{end}}
+            </div>
+          {{else}}
+            <input type="text" id="{{$section.Name}}__{{$field.Name}}" placeholder="Enter {{$field.Title}}" name="{{$section.Name}}__{{$field.Name}}" required>
+          {{end}}
         {{else if $header := $item.Header}}
           <h3>{{$header.Title}}</h3>
           {{if $header.Description}}<p>{{$header.Description}}</p>{{end}}

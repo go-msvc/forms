@@ -337,13 +337,19 @@ func (s Text) Validate() error {
 	return nil
 } //Text.Validate()
 
-type Date struct{}
+type Date struct {
+	Min *string `json:"min" doc:"Optional minimum date CCYY-MM-DD"`
+	Max *string `json:"max" doc:"Optional maximum date CCYY-MM-DD"`
+}
 
 func (s Date) Validate() error {
 	return nil
 } //Date.Validate()
 
-type Time struct{}
+type Time struct {
+	Min *string `json:"min" doc:"Optional minimum date HH:MM"`
+	Max *string `json:"max" doc:"Optional maximum date HH:MM"`
+}
 
 func (s Time) Validate() error {
 	return nil

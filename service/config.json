@@ -1,0 +1,9 @@
+{
+    "ms":{
+        "server":{
+            "nats":{
+                "domain":"forms"
+            }
+        }
+    }
+}

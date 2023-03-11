@@ -1,0 +1,55 @@
+{
+    "form":{
+        "title":"FormTitle1",
+        "description":"FormDesc1",
+        "sections":[
+            {
+                "name":"sec_1",
+                "title":"Section 1",
+                "description":"This is section 1...",
+                "items":[
+                    {"field":{"title":"Field1", "description":"Desc1", "name":"s1", "short":{}}},
+                    {"field":{"title":"Field2", "description":"Desc2", "name":"s1", "integer":{}}},
+                    {"field":{"title":"Field3", "description":"Desc3", "name":"s1", "number":{}}},
+                    {"field":{"title":"Field4", "description":"Desc4", "name":"s1", "text":{}}},
+                    {"field":{"title":"Field5", "description":"Desc5", "name":"s1", "choice":{"options":[
+                        {"title":"A", "value":"1"},
+                        {"title":"B", "value":"2"}
+                    ]}}},
+                    {"field":{"title":"Field6", "description":"Desc6", "name":"s1", "selection":{"options":[
+                        {"title":"CA", "value":"11"},
+                        {"title":"CB", "value":"12"}
+                    ]}}},
+                    {"field":{"title":"Field7", "description":"Desc7", "name":"s1", "date":{}}},
+                    {"field":{"title":"Field8", "description":"Desc8", "name":"s1", "time":{}}},
+                    {"field":{"title":"Field9", "description":"Desc9", "name":"s1", "duration":{}}},
+                    {"header":{"title":"Some header", "description":"Some header Desc1"}},
+                    {"image":{"title":"Some image", "description":"Image caption is here", "id":"123"}},
+                    {"table":{"title":"Table1", "description":"table one", "name":"table_1", "min":0, "max":5,
+                        "uniq":["f1"],
+                        "fields":[
+                            {"title":"TableField1", "name":"f1", "short":{}},
+                            {"title":"TableField2", "name":"f2", "integer":{}}
+                        ]
+                    }},
+                    {"sub":{"title":"Sub1", "description":"sub one", "name":"sub_1", "min":0, "max":5, "section":{
+                        "title":"SubSection1Title", "description":"sub section in section 1", "name":"sub1",
+                        "items":[
+                            {"image":{"title":"IMG1", "id":"22"}},
+                            {"field":{"title":"F1", "name":"f2", "short":{}}}
+                        ]
+                    }}}
+                ]
+            },
+            {
+                "name":"sec_2",
+                "title":"Section 2",
+                "description":"This is section 2...",
+                "items":[
+                    {"field":{"title":"Section 2's Field1", "description":"S2Desc1", "name":"f1", "short":{}}},
+                    {"field":{"title":"Section 2's Field2", "description":"S2Desc2", "name":"f2", "integer":{}}}
+                ]
+            }
+        ]
+    }
+}

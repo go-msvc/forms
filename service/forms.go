@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-msvc/errors"
 	"github.com/go-msvc/forms"
+	"github.com/go-msvc/forms/service/formsinterface"
 	"github.com/google/uuid"
 )
 
@@ -23,22 +24,7 @@ func init() {
 	}
 }
 
-type AddFormRequest struct {
-	Form forms.Form `json:"form"`
-}
-
-func (req AddFormRequest) Validate() error {
-	if err := req.Form.Validate(); err != nil {
-		return errors.Wrapf(err, "invalid form")
-	}
-	return nil
-}
-
-type AddFormResponse struct {
-	Form forms.Form `json:"form"`
-}
-
-func addForm(ctx context.Context, req AddFormRequest) (*AddFormResponse, error) {
+func addForm(ctx context.Context, req formsinterface.AddFormRequest) (*formsinterface.AddFormResponse, error) {
 	if req.Form.ID != "" {
 		return nil, errors.Errorf("form.id=%s may not be specified when adding a form", req.Form.ID)
 	}
@@ -51,28 +37,12 @@ func addForm(ctx context.Context, req AddFormRequest) (*AddFormResponse, error) 
 	if err := saveForm(req.Form); err != nil {
 		return nil, errors.Wrapf(err, "failed to save form")
 	}
-	return &AddFormResponse{
+	return &formsinterface.AddFormResponse{
 		Form: req.Form,
 	}, nil
 } //addForm()
 
-type GetFormRequest struct {
-	ID  string `json:"id"`
-	Rev int    `json:"rev" doc:"Use 0 for the latest version of the form"`
-}
-
-func (req GetFormRequest) Validate() error {
-	if req.ID == "" {
-		return errors.Errorf("missing id")
-	}
-	return nil
-}
-
-type GetFormResponse struct {
-	Form forms.Form `json:"form"`
-}
-
-func getForm(ctx context.Context, req GetFormRequest) (*GetFormResponse, error) {
+func getForm(ctx context.Context, req formsinterface.GetFormRequest) (*formsinterface.GetFormResponse, error) {
 	if req.ID == "" {
 		return nil, errors.Errorf("id must be specified when getting a form")
 	}
@@ -80,27 +50,12 @@ func getForm(ctx context.Context, req GetFormRequest) (*GetFormResponse, error) 
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to load existing form")
 	}
-	return &GetFormResponse{
+	return &formsinterface.GetFormResponse{
 		Form: existingForm,
 	}, nil
 } //getForm()
 
-type UpdFormRequest struct {
-	Form forms.Form `json:"form"`
-}
-
-func (req UpdFormRequest) Validate() error {
-	if err := req.Form.Validate(); err != nil {
-		return errors.Wrapf(err, "invalid form")
-	}
-	return nil
-}
-
-type UpdFormResponse struct {
-	Form forms.Form `json:"form"`
-}
-
-func updForm(ctx context.Context, req UpdFormRequest) (*UpdFormResponse, error) {
+func updForm(ctx context.Context, req formsinterface.UpdFormRequest) (*formsinterface.UpdFormResponse, error) {
 	if req.Form.ID == "" {
 		return nil, errors.Errorf("form.id must be specified when updating a form")
 	}
@@ -116,37 +71,20 @@ func updForm(ctx context.Context, req UpdFormRequest) (*UpdFormResponse, error) 
 	if err := saveForm(req.Form); err != nil {
 		return nil, errors.Wrapf(err, "failed to save form")
 	}
-	return &UpdFormResponse{
+	return &formsinterface.UpdFormResponse{
 		Form: req.Form,
 	}, nil
 } //updForm()
 
-type DelFormRequest struct {
-	ID string `json:"id"`
-}
-
-func (req DelFormRequest) Validate() error {
-	if req.ID == "" {
-		return errors.Errorf("missing id")
-	}
-	return nil
-}
-
-type DelFormResponse struct{}
-
-func delForm(ctx context.Context, req DelFormRequest) (*DelFormResponse, error) {
+func delForm(ctx context.Context, req formsinterface.DelFormRequest) (*formsinterface.DelFormResponse, error) {
 	formDir := formsDir + "/" + req.ID
 	if err := os.RemoveAll(formDir); err != nil {
 		return nil, errors.Wrapf(err, "failed to remove form")
 	}
-	return &DelFormResponse{}, nil
+	return &formsinterface.DelFormResponse{}, nil
 }
 
-type FindFormRequest struct{}
-
-type FindFormResponse struct{}
-
-func findForm(ctx context.Context, req AddFormRequest) (*AddFormResponse, error) {
+func findForm(ctx context.Context, req formsinterface.AddFormRequest) (*formsinterface.AddFormResponse, error) {
 	//should only see forms that you own or shared with you...
 	return nil, MyError{Message: "NYI"}
 }

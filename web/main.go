@@ -12,12 +12,20 @@ import (
 
 	"github.com/go-msvc/errors"
 	"github.com/go-msvc/forms"
+	"github.com/go-msvc/forms/service/formsinterface"
 	"github.com/go-msvc/logger"
+	"github.com/go-msvc/nats-utils"
+	"github.com/go-msvc/utils/ms"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 )
 
-var log = logger.New().WithLevel(logger.LevelDebug)
+var (
+	log         = logger.New().WithLevel(logger.LevelDebug)
+	msClient    ms.Client
+	formsDomain = "forms"
+	formsTTL    = time.Second * 1
+)
 
 func main() {
 	//preload some templates
@@ -35,6 +43,22 @@ func main() {
 	//note: templates
 	fileServer := http.FileServer(http.Dir("./resources"))
 	http.Handle("/resources/", httpLogger(http.StripPrefix("/resources", fileServer)))
+
+	//ms client
+	msClientConfig := nats.ClientConfig{
+		Config: nats.Config{
+			Domain: "forms-web",
+		},
+	}
+	if err := msClientConfig.Validate(); err != nil {
+		panic(fmt.Sprintf("client config: %+v", err))
+	}
+
+	var err error
+	msClient, err = msClientConfig.Create()
+	if err != nil {
+		panic(fmt.Sprintf("failed to create ms client: %+v", err))
+	}
 
 	//start the web server
 	http.ListenAndServe("localhost:8080", nil)
@@ -323,13 +347,37 @@ type formTemplateItem struct {
 func formHandler(httpRes http.ResponseWriter, httpReq *http.Request) {
 	vars := mux.Vars(httpReq)
 	id := vars["id"]
-	form, ok := testForms[id]
-	if !ok {
+
+	//us ms client to fetch the form
+	//ms-client use one id for context, request and own domain, as it does only one request then terminates
+	ctx := context.Background()
+	res, err := msClient.Sync(
+		ctx,
+		ms.Address{
+			Domain:    formsDomain,
+			Operation: "get_form",
+		},
+		time.Millisecond*time.Duration(formsTTL),
+		formsinterface.GetFormRequest{
+			ID: id,
+		},
+		formsinterface.GetFormResponse{})
+	if err != nil {
 		log.Errorf("form.id(%s) not found", id)
 		httpRes.Header().Set("Content-Type", "text/plain")
 		http.Error(httpRes, fmt.Sprintf("unknown form id(%s)", id), http.StatusNotFound)
 		return
 	}
+	log.Debugf("Got res (%T)%+v", res, res)
+	form := res.(formsinterface.GetFormResponse).Form
+
+	// form, ok := testForms[id]
+	// if !ok {
+	// 	log.Errorf("form.id(%s) not found", id)
+	// 	httpRes.Header().Set("Content-Type", "text/plain")
+	// 	http.Error(httpRes, fmt.Sprintf("unknown form id(%s)", id), http.StatusNotFound)
+	// 	return
+	// }
 
 	switch httpReq.Method {
 	case http.MethodGet:

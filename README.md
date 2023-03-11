@@ -21,16 +21,17 @@ Note: to access the forms outside, need generic go-msvc api gateway to get it fr
 - 2023-03-11
 - Created micro-service to manage forms (using simple local file system)
 - Added micro-service call to web to fetch form from the micro-service
+- Created micro-service operations to store documents
+- Displaying other types of fields
+- Submit documents into micro-service
 
 ## Next ##
+- Template: Field description as hint when hover over field
 - Template: When only one section - do not show the tabs
 - When only one section, section.name is not required
 - Form validate: all fields must have unique names in scope
-- Create micro-service operations to store documents
-- Call that from the web
 - Allow existing document to be opened for editing and submit new version of document
-
-- Add basic field validation
+- Add basic field validation into the form and template (e.g. date min/max already added)
 - Add basic display options
 - Send notifications and consume
 - Support for user scripts - compile into go code? or see if can execute python code? Handle exceptions!

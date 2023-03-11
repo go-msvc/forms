@@ -1,6 +1,7 @@
 package forms
 
 import (
+	"regexp"
 	"time"
 
 	"github.com/go-msvc/errors"
@@ -310,30 +311,73 @@ func (f *Field) Validate() error {
 
 // todo: add validation and display options to each of these
 type Short struct {
+	MinLen *int    `json:"min_length,omitempty"`
+	MaxLen *int    `json:"max_length,omitempty"`
+	Regex  *string `json:"regex,omitempty"`
 }
 
 func (s Short) Validate() error {
+	if s.MinLen != nil && *s.MinLen < 0 {
+		return errors.Errorf("min_length:%d < 0", *s.MinLen)
+	}
+	if s.MaxLen != nil && *s.MaxLen < 0 {
+		return errors.Errorf("max_length:%d < 0", *s.MaxLen)
+	}
+	if s.MinLen != nil && s.MaxLen != nil && (*s.MinLen > *s.MaxLen) {
+		return errors.Errorf("min_length:%d > max_lengh:%d", *s.MinLen, *s.MaxLen)
+	}
+	if s.Regex != nil {
+		if _, err := regexp.Compile(*s.Regex); err != nil {
+			return errors.Errorf("invalid regex:\"%s\"", *s.Regex)
+		}
+	}
 	return nil
 } //Short.Validate()
 
 type Integer struct {
+	Min *int `json:"min,omitempty"`
+	Max *int `json:"max,omitempty"`
 }
 
-func (s Integer) Validate() error {
+func (i Integer) Validate() error {
+	if i.Min != nil && i.Max != nil && (*i.Min > *i.Max) {
+		return errors.Errorf("min:%d > max:%d", *i.Min, *i.Max)
+	}
 	return nil
 } //Integer.Validate()
 
 type Number struct {
+	Min *float64 `json:"min,omitempty"`
+	Max *float64 `json:"max,omitempty"`
 }
 
-func (s Number) Validate() error {
+func (i Number) Validate() error {
+	if i.Min != nil && i.Max != nil && (*i.Min > *i.Max) {
+		return errors.Errorf("min:%d > max:%d", *i.Min, *i.Max)
+	}
 	return nil
 } //Number.Validate()
 
 type Text struct {
+	MinLen *int `json:"min_length,omitempty"`
+	MaxLen *int `json:"max_length,omitempty"`
+	NrRows *int `json:"nr_rows,omitempty" doc:"Nr of rows to display in the form. Scrolling allowed to edit more. Valid values = 2..20."`
+	//todo: display options: nr rows / cols /maxlen
 }
 
 func (s Text) Validate() error {
+	if s.MinLen != nil && *s.MinLen < 0 {
+		return errors.Errorf("min_length:%d < 0", *s.MinLen)
+	}
+	if s.MaxLen != nil && *s.MaxLen < 0 {
+		return errors.Errorf("max_length:%d < 0", *s.MaxLen)
+	}
+	if s.MinLen != nil && s.MaxLen != nil && (*s.MinLen > *s.MaxLen) {
+		return errors.Errorf("min_length:%d > max_lengh:%d", *s.MinLen, *s.MaxLen)
+	}
+	if s.NrRows != nil && *s.NrRows < 2 || *s.NrRows > 20 {
+		return errors.Errorf("nr_rows:%d is not 2..20")
+	}
 	return nil
 } //Text.Validate()
 
@@ -342,7 +386,26 @@ type Date struct {
 	Max *string `json:"max" doc:"Optional maximum date CCYY-MM-DD"`
 }
 
-func (s Date) Validate() error {
+func (d Date) Validate() error {
+	var min time.Time
+	var max time.Time
+	if d.Min != nil {
+		var err error
+		if min, err = time.Parse("2006-01-02", *d.Min); err != nil {
+			return errors.Errorf("min:\"%s\" is not CCYY-MM-DD", *d.Min)
+		}
+	}
+	if d.Max != nil {
+		var err error
+		if max, err = time.Parse("2006-01-02", *d.Max); err != nil {
+			return errors.Errorf("max:\"%s\" is not CCYY-MM-DD", *d.Max)
+		}
+	}
+	if d.Min != nil && d.Max != nil {
+		if min.After(max) {
+			return errors.Errorf("min:\"%s\" is after max:\"%s\"", *d.Min, *d.Max)
+		}
+	}
 	return nil
 } //Date.Validate()
 
@@ -351,11 +414,36 @@ type Time struct {
 	Max *string `json:"max" doc:"Optional maximum date HH:MM"`
 }
 
-func (s Time) Validate() error {
+func (d Time) Validate() error {
+	var min time.Time
+	var max time.Time
+	if d.Min != nil {
+		var err error
+		if min, err = time.Parse("15:04`", *d.Min); err != nil {
+			return errors.Errorf("min:\"%s\" is not HH:MM", *d.Min)
+		}
+	}
+	if d.Max != nil {
+		var err error
+		if max, err = time.Parse("15:04", *d.Max); err != nil {
+			return errors.Errorf("max:\"%s\" is not HH:MM", *d.Max)
+		}
+	}
+	if d.Min != nil && d.Max != nil {
+		if min.After(max) {
+			return errors.Errorf("min:\"%s\" is after max:\"%s\"", *d.Min, *d.Max)
+		}
+	}
 	return nil
 } //Time.Validate()
 
-type Duration struct{}
+type Duration struct {
+	//todo: should have options like 15min or 1yr granularity...
+	// Min *time.Duration
+	// Max *time.Duration
+	//todo: and display should be drop down list of values to select from... but also allow flexible text input like 2h3min
+	//for not just text input without validation and stored like that...
+}
 
 func (s Duration) Validate() error {
 	return nil
@@ -401,6 +489,9 @@ type Option struct {
 func (o Option) Validate() error {
 	if err := o.Header.Validate(); err != nil {
 		return err
+	}
+	if o.Value == "" {
+		return errors.Errorf("missing value")
 	}
 	return nil
 } //Option.Validate()

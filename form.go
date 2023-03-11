@@ -1,7 +1,10 @@
 package forms
 
 import (
+	"html/template"
 	"regexp"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/go-msvc/errors"
@@ -22,7 +25,9 @@ func (f *Form) Validate() error {
 	if err := f.Header.Validate(); err != nil {
 		return errors.Wrapf(err, "invalid header")
 	}
+	sectionNames := []string{}
 	for i, s := range f.Sections {
+		sectionNames = append(sectionNames, s.Name)
 		if err := s.Validate(); err != nil {
 			return errors.Wrapf(err, "invalid section[%d]", i)
 		}
@@ -30,6 +35,9 @@ func (f *Form) Validate() error {
 	}
 	if len(f.Sections) < 1 {
 		return errors.Errorf("missing sections")
+	}
+	if !uniqNames(sectionNames) {
+		return errors.Errorf("section names are not unique")
 	}
 	f.Sections[0].FirstSection = true
 	return nil
@@ -44,20 +52,34 @@ type Section struct {
 	Items        []Item `json:"items"`
 }
 
-func (s Section) Validate() error {
+func (s *Section) Validate() error {
 	if err := s.Header.Validate(); err != nil {
 		return errors.Wrapf(err, "invalid header")
 	}
-	if s.Name == "" {
-		return errors.Errorf("missing name")
+	var err error
+	if s.Name, err = validateName(s.Name); err != nil {
+		return errors.Wrapf(err, "invalid name")
 	}
 	if len(s.Items) < 1 {
 		return errors.Errorf("missing items")
 	}
+	fieldNames := []string{}
 	for i, item := range s.Items {
+		if item.Field != nil {
+			fieldNames = append(fieldNames, item.Field.Name)
+		}
+		if item.Table != nil {
+			fieldNames = append(fieldNames, item.Table.Name)
+		}
+		if item.Sub != nil {
+			fieldNames = append(fieldNames, item.Sub.Name)
+		}
 		if err := item.Validate(); err != nil {
 			return errors.Wrapf(err, "invalid item[%d]", i)
 		}
+	}
+	if !uniqNames(fieldNames) {
+		return errors.Errorf("field/table/sub names are not uniq")
 	}
 	return nil
 } //Section.Validate()
@@ -111,13 +133,19 @@ func (i *Item) Validate() error {
 } //Item.Validate()
 
 type Header struct {
-	Title       string `json:"title,omitempty" doc:"Title is printed bigger than description"`
-	Description string `json:"description,omitempty" doc:"Use markdown to style"`
+	Title           string        `json:"title,omitempty" doc:"Title is printed bigger than description"`
+	Description     string        `json:"description,omitempty" doc:"Use markdown to style"`
+	HtmlTitle       template.HTML `json:"-" doc:"Generated before rendering from markdown in the description"`
+	HtmlDescription template.HTML `json:"-" doc:"Generated before rendering from markdown in the description"`
 }
 
-func (h Header) Validate() error {
-	if h.Title == "" {
-		return errors.Errorf("missing title")
+func (h *Header) Validate() error {
+	var err error
+	if h.Title, err = validateTitle(h.Title); err != nil {
+		return errors.Wrapf(err, "invalid title")
+	}
+	if h.Description, err = validateDescription(h.Description); err != nil {
+		return errors.Errorf("missing description")
 	}
 	return nil
 } //Header.Validate()
@@ -147,12 +175,13 @@ type Table struct {
 	Fields []Field  `json:"fields" doc:"One of more fields"`
 }
 
-func (t Table) Validate() error {
+func (t *Table) Validate() error {
 	if err := t.Header.Validate(); err != nil {
 		return errors.Wrapf(err, "invalid header")
 	}
-	if t.Name == "" {
-		return errors.Errorf("missing name")
+	var err error
+	if t.Name, err = validateName(t.Name); err != nil {
+		return errors.Wrapf(err, "invalid name")
 	}
 	if t.Min < 0 || t.Min > 50 {
 		return errors.Errorf("min:%d must be 0..50", t.Min)
@@ -206,8 +235,9 @@ func (s *Sub) Validate() error {
 	if err := s.Header.Validate(); err != nil {
 		return errors.Wrapf(err, "invalid header")
 	}
-	if s.Name == "" {
-		return errors.Errorf("missing name")
+	var err error
+	if s.Name, err = validateName(s.Name); err != nil {
+		return errors.Wrapf(err, "invalid name")
 	}
 	if s.Min < 0 || s.Min > 50 {
 		return errors.Errorf("min:%d must be 0..50", s.Min)
@@ -245,8 +275,9 @@ func (f *Field) Validate() error {
 	if err := f.Header.Validate(); err != nil {
 		return errors.Wrapf(err, "invalid header")
 	}
-	if f.Name == "" {
-		return errors.Errorf("missing name")
+	var err error
+	if f.Name, err = validateName(f.Name); err != nil {
+		return errors.Wrapf(err, "invalid name")
 	}
 	count := 0
 	if f.Short != nil {
@@ -495,3 +526,48 @@ func (o Option) Validate() error {
 	}
 	return nil
 } //Option.Validate()
+
+func uniqNames(names []string) bool {
+	sort.Strings(names)
+	for i := range names {
+		if i > 0 && names[i-1] == names[i] {
+			return false
+		}
+	}
+	return true
+} //uniqNames()
+
+func validateName(name string) (string, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return name, errors.Errorf("\"\" is blank")
+	}
+	if !snakeRegex.MatchString(name) {
+		return name, errors.Errorf("\"%s\" is not written in snake_case", name)
+	}
+	return name, nil
+}
+
+const snakePattern = `[a-z]([a-z0-9_]*[a-z0-9])*`
+
+var snakeRegex = regexp.MustCompile("^" + snakePattern + "$")
+
+func validateTitle(s string) (string, error) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return s, errors.Errorf("\"\" is blank")
+	}
+	// if !simpleTextRegex.MatchString(s) {
+	// 	return s, errors.Errorf("\"%s\" is not written in simple text", s)
+	// }
+	return s, nil
+}
+
+const simpleTextPattern = `[:graph:]([[:graph:] ]*[:graph:])*`
+
+var simpleTextRegex = regexp.MustCompile("^" + simpleTextPattern + "$")
+
+func validateDescription(s string) (string, error) {
+	s = strings.TrimSpace(s)
+	return s, nil
+}

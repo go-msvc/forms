@@ -1,4 +1,4 @@
-{{define "head"}}<title>{{.Title}}</title>{{end}}
+{{define "head"}}<title>{{.HtmlTitle}}</title>{{end}}
 {{define "body"}}
 
   <script>
@@ -32,8 +32,8 @@ function openSection(evt, sectionName) {
 
     <!-- form header -->
     <div class="container">
-      <h1>{{.Title}}</h1>
-      {{if .Description}}<p>{{.Description}}</p>{{end}}
+      <h1>{{.HtmlTitle}}</h1>
+      {{if .HtmlDescription}}<p>{{.HtmlDescription}}</p>{{end}}
     </div>
 
     <!-- with multiple sections, all sections display in a tab -->
@@ -53,21 +53,21 @@ function openSection(evt, sectionName) {
       {{else}}style="display: none"
       {{end}}
       >
-      <h2>{{$section.Title}}</h2>
-      {{if $section.Description}}<p>{{$section.Description}}</p>{{end}}
+      <h2>{{$section.HtmlTitle}}</h2>
+      {{if $section.HtmlDescription}}<p>{{$section.HtmlDescription}}</p>{{end}}
 
       <!-- all items in the section -->
       {{range $item := $section.Items}}
         {{if $field := $item.Field}}
-          <label for="{{$section.Name}}__{{$field.Name}}"><b>{{$field.Title}}</b></label>
+          <label for="{{$section.Name}}__{{$field.Name}}"><b>{{$field.HtmlTitle}}</b></label>
           {{if $field.Short}}
-            <input type="text" id="{{$section.Name}}__{{$field.Name}}" placeholder="Enter {{$field.Title}}" name="{{$section.Name}}__{{$field.Name}}" required>
+            <input type="text" id="{{$section.Name}}__{{$field.Name}}" placeholder="Enter {{$field.HtmlTitle}}" name="{{$section.Name}}__{{$field.Name}}" required>
           {{else if $field.Integer}}
-            <input type="text" id="{{$section.Name}}__{{$field.Name}}" placeholder="Enter integer number for {{$field.Title}}" name="{{$section.Name}}__{{$field.Name}}" required>
+            <input type="text" id="{{$section.Name}}__{{$field.Name}}" placeholder="Enter integer number for {{$field.HtmlTitle}}" name="{{$section.Name}}__{{$field.Name}}" required>
           {{else if $field.Number}}
-            <input type="text" id="{{$section.Name}}__{{$field.Name}}" placeholder="Enter number for {{$field.Title}}" name="{{$section.Name}}__{{$field.Name}}" required>
+            <input type="text" id="{{$section.Name}}__{{$field.Name}}" placeholder="Enter number for {{$field.HtmlTitle}}" name="{{$section.Name}}__{{$field.Name}}" required>
           {{else if $field.Text}}
-            <textarea id="{{$section.Name}}__{{$field.Name}}" placeholder="Enter text for {{$field.Title}}" name="{{$section.Name}}__{{$field.Name}}" rows="4" cols="50" required>current value...</textarea>
+            <textarea id="{{$section.Name}}__{{$field.Name}}" placeholder="Enter text for {{$field.HtmlTitle}}" name="{{$section.Name}}__{{$field.Name}}" rows="4" cols="50" required>current value...</textarea>
           {{else if $field.Date}}
             <div class="optionsGroupBelow">
               <input type="date" id="{{$section.Name}}__{{$field.Name}}" _placeholder="YYYY-MM-DD" name="{{$section.Name}}__{{$field.Name}}"
@@ -89,7 +89,7 @@ function openSection(evt, sectionName) {
               {{range $option := $field.Choice.Options}}
               <div>
                 <input type="radio" id="{{$section.Name}}__{{$field.Name}}_{{$option.Value}}" name="{{$section.Name}}__{{$field.Name}}" value="{{$option.Value}}">
-                <label for="{{$option.Value}}">{{$option.Title}}</label><br>
+                <label for="{{$option.Value}}">{{$option.HtmlTitle}}</label><br>
               </div>
               {{end}}
             </div>
@@ -97,15 +97,15 @@ function openSection(evt, sectionName) {
             <div class="optionsGroupBelow">
               {{range $option := $field.Selection.Options}}
                 <input type="checkbox" id="{{$section.Name}}__{{$field.Name}}_{{$option.Value}}" name="{{$section.Name}}__{{$field.Name}}" value="{{$option.Value}}">
-                <label for="{{$option.Value}}">{{$option.Title}}</label><br>
+                <label for="{{$option.Value}}">{{$option.HtmlTitle}}</label><br>
               {{end}}
             </div>
           {{else}}
-            <input type="text" id="{{$section.Name}}__{{$field.Name}}" placeholder="Enter {{$field.Title}}" name="{{$section.Name}}__{{$field.Name}}" required>
+            <input type="text" id="{{$section.Name}}__{{$field.Name}}" placeholder="Enter {{$field.HtmlTitle}}" name="{{$section.Name}}__{{$field.Name}}" required>
           {{end}}
         {{else if $header := $item.Header}}
-          <h3>{{$header.Title}}</h3>
-          {{if $header.Description}}<p>{{$header.Description}}</p>{{end}}
+          <h3>{{$header.HtmlTitle}}</h3>
+          {{if $header.HtmlDescription}}<p>{{$header.HtmlDescription}}</p>{{end}}
         {{else if $image := $item.Image}}
           <div class="imgcontainer">
             <img src="/resources/images/img_avatar2.png" alt="Avatar" class="centered">

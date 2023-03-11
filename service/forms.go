@@ -94,7 +94,7 @@ func findForm(ctx context.Context, req formsinterface.AddFormRequest) (*formsint
 
 func saveForm(f forms.Form) error {
 	formDir := formsDir + "/" + f.ID
-	if err := os.Mkdir(formDir, 0770); err != nil && err != os.ErrExist {
+	if err := os.MkdirAll(formDir, 0770); err != nil && err != os.ErrExist {
 		return errors.Wrapf(err, "cannot make form dir %s", formDir)
 	}
 

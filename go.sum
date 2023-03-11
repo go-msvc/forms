@@ -10,6 +10,8 @@ github.com/go-msvc/nats-utils v0.0.0-20230311065028-68a055bca2db h1:PttNJVx+b/pr
 github.com/go-msvc/nats-utils v0.0.0-20230311065028-68a055bca2db/go.mod h1:yfrV+s7V4UHfkgD/rUxm9gLfwYB14WRXjoxlc0nltFU=
 github.com/go-msvc/utils v0.0.0-20230212131637-f767165ca468 h1:vv4Svaf9vFQnOUY2WDfsmSLEfouxxdVoxRle5kEbFbc=
 github.com/go-msvc/utils v0.0.0-20230212131637-f767165ca468/go.mod h1:+Q5H/RrEJe3lV6Gf8D3oBGCtwiwhioh9kgjEY3m5i18=
+github.com/gomarkdown/markdown v0.0.0-20230310225216-e92f2877bcce h1:VslHqe18Tbon5AePg0DNpxo6+WJDEpoA4r+a64OJyLk=
+github.com/gomarkdown/markdown v0.0.0-20230310225216-e92f2877bcce/go.mod h1:JDGcbDT52eL4fju3sZ4TeHGsQwhG9nbDV21aMyhwPoA=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=

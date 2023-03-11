@@ -19,6 +19,8 @@ import (
 	"github.com/go-msvc/utils/ms"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
+
+	"github.com/gomarkdown/markdown"
 )
 
 var (
@@ -195,21 +197,21 @@ func page(pageName string) http.HandlerFunc {
 				return
 			}
 			log.Debugf("form data: %+v", httpReq.PostForm)
-			if doc, err := postForm(ctx, httpReq.PostForm); err != nil {
-				log.Errorf("failed to post: %+v", err)
-				err = errors.Wrapf(err, "failed to submit the form data")
-				return
-			} else {
-				//show details of submitted documents
-				log.Debugf("Submitted: %+v", doc)
-				docData := map[string]interface{}{
-					"ID":        doc.ID,
-					"Rev":       doc.Rev,
-					"Timestamp": doc.Timestamp,
-					"FormID":    doc.FormID,
-				}
-				showPage(ctx, submittedDocTemplate, docData, httpRes)
-			}
+			// if doc, err := postForm(ctx, httpReq.PostForm); err != nil {
+			// 	log.Errorf("failed to post: %+v", err)
+			// 	err = errors.Wrapf(err, "failed to submit the form data")
+			// 	return
+			// } else {
+			// 	//show details of submitted documents
+			// 	log.Debugf("Submitted: %+v", doc)
+			// 	docData := map[string]interface{}{
+			// 		"ID":        doc.ID,
+			// 		"Rev":       doc.Rev,
+			// 		"Timestamp": doc.Timestamp,
+			// 		"FormID":    doc.FormID,
+			// 	}
+			// 	showPage(ctx, submittedDocTemplate, docData, httpRes)
+			// }
 		default:
 			err = errors.Errorf("method not supported")
 		}
@@ -393,6 +395,29 @@ func formHandler(httpRes http.ResponseWriter, httpReq *http.Request) {
 
 	switch httpReq.Method {
 	case http.MethodGet:
+		form.Header = renderHeaderHTML(form.Header)
+		for i, s := range form.Sections {
+			s.Header = renderHeaderHTML(s.Header)
+			for itemIndex, item := range s.Items {
+				if item.Header != nil {
+					*item.Header = renderHeaderHTML(*item.Header)
+				}
+				if item.Field != nil {
+					item.Field.Header = renderHeaderHTML(item.Field.Header)
+				}
+				if item.Image != nil {
+					item.Image.Header = renderHeaderHTML(item.Image.Header)
+				}
+				if item.Table != nil {
+					item.Table.Header = renderHeaderHTML(item.Table.Header)
+				}
+				if item.Sub != nil {
+					item.Sub.Header = renderHeaderHTML(item.Sub.Header)
+				}
+				s.Items[itemIndex] = item
+			} //for each item
+			form.Sections[i] = s
+		} //for each section
 		showForm(form, httpRes)
 	case http.MethodPost:
 		if err := httpReq.ParseForm(); err != nil {
@@ -429,4 +454,17 @@ func showForm(form forms.Form, httpRes http.ResponseWriter) {
 		http.Error(httpRes, fmt.Sprintf("form(%s) rendering failed: %+v", form.ID, err), http.StatusNotFound)
 		return
 	}
+}
+
+func renderHeaderHTML(h forms.Header) forms.Header {
+	//generate HTML descriptions
+	// ext := markdownparser.CommonExtensions | markdownparser.AutoHeadingIDs
+	// mdp := markdownparser.NewWithExtensions(ext)
+	h.HtmlTitle = template.HTML(markdown.ToHTML([]byte(h.Title), nil, nil))
+	if h.Description != "" {
+		h.HtmlDescription = template.HTML(markdown.ToHTML([]byte(h.Description), nil, nil))
+	} else {
+		h.Description = ""
+	}
+	return h
 }

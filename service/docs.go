@@ -94,7 +94,7 @@ func findDoc(ctx context.Context, req formsinterface.FindDocRequest) (*formsinte
 
 func saveDoc(f forms.Doc) error {
 	docDir := docsDir + "/" + f.ID
-	if err := os.Mkdir(docDir, 0770); err != nil && err != os.ErrExist {
+	if err := os.MkdirAll(docDir, 0770); err != nil && err != os.ErrExist {
 		return errors.Wrapf(err, "cannot make doc dir %s", docDir)
 	}
 

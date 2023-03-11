@@ -9,6 +9,7 @@ require (
 	github.com/go-msvc/logger v1.0.0 // indirect
 	github.com/go-msvc/nats-utils v0.0.0-20230311065028-68a055bca2db // indirect
 	github.com/go-msvc/utils v0.0.0-20230212131637-f767165ca468 // indirect
+	github.com/gomarkdown/markdown v0.0.0-20230310225216-e92f2877bcce // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect

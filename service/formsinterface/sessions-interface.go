@@ -21,13 +21,12 @@ type AddSessionResponse struct {
 }
 
 type GetSessionRequest struct {
-	ID  string `json:"id"`
-	Rev int    `json:"rev" session:"Use 0 for the latest version of the session"`
+	DeviceID string `json:"device_id"`
 }
 
 func (req GetSessionRequest) Validate() error {
-	if req.ID == "" {
-		return errors.Errorf("missing id")
+	if req.DeviceID == "" {
+		return errors.Errorf("missing device-id")
 	}
 	return nil
 }
@@ -37,14 +36,22 @@ type GetSessionResponse struct {
 }
 
 type UpdSessionRequest struct {
-	Session forms.Session `json:"session"`
+	DeviceID string        `json:"device_id"`
+	Session  forms.Session `json:"session"`
 }
 
 func (req UpdSessionRequest) Validate() error {
+	if req.DeviceID == "" {
+		return errors.Errorf("missing device_id")
+	}
 	if err := req.Session.Validate(); err != nil {
 		return errors.Wrapf(err, "invalid session")
 	}
 	return nil
+}
+
+type UpdSessionResponse struct {
+	Session forms.Session `json:"session"`
 }
 
 type DelSessionRequest struct {

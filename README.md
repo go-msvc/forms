@@ -26,17 +26,36 @@ Note: to access the forms outside, need generic go-msvc api gateway to get it fr
 - Submit documents into micro-service
 - Added support for markdown in titles and descriptions
 - Added campaign to the service and to web, but web wait for redisClient to send a notification
+- Moved form.tmpl hidden fields into internal context/cookie...
+- Using internal session stored in-memory in the micro-service
+- Added basic field validation into the form description and template (e.g. date min/max already added) but not yet applied
 
 ## Next ##
-- Move form.tmpl hidden fields into internal context/cookie...
-- Add campaigns to control document substitution and notification sending ...
-- Consume notifications
+- Identify the user and store a profile - even if empty
+    but indicate if email is not set so that user can recover profile when moving to other device
+    associate multiple devices to a profile
+
+
+
+- Let submit store client token, so that messages can be queued for a client to review without having to login
+    client can also open from link sent in email...
+
+- Busy with consumer...
+- Consume notifications to do:
+    - add docs to internal lists in a db, e.g. forReview, accepted, rejected, returned, ...
+    - display list of documents in a list (may be add to list without need for a service)
+    - let user see list of docs, open each, then do something
+    - ...
+
+- Show queue of documents to a user/group... for review
+- Show actions that user can take
+- Create a new document from an old document, with some fields copied and some edited... e.g. let reviewer add comments and mark who did the review when... then queue for another group/user
+
+
+- Block campaign when REDIS KEY is longer than N - i.e. no longer processed
 - Template: Field description as hint when hover over field
 - Form Template must use java script to validate forms while filled in
-- Form validate: all fields must have unique names in scope
 - Allow existing document to be opened for editing and submit new version of document
-- Add basic field validation into the form and template (e.g. date min/max already added)
-- Add basic display options
 - Support for user scripts - compile into go code? or see if can execute python code? Handle exceptions!
 
 ## Apps ##

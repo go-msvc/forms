@@ -13,17 +13,23 @@ require (
 	github.com/gorilla/sessions v1.2.1
 )
 
+replace github.com/go-msvc/humans => ../humans
+
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-msvc/config v0.0.2 // indirect
 	github.com/go-msvc/data v1.0.1 // indirect
+	github.com/go-msvc/humans v0.0.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect
+	github.com/jansemmelink/events v0.0.0-20230315195305-2665510c82ea // indirect
 	github.com/mediocregopher/radix/v3 v3.8.1 // indirect
 	github.com/nats-io/nats.go v1.23.0 // indirect
 	github.com/nats-io/nkeys v0.3.0 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
 )

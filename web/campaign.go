@@ -99,7 +99,7 @@ func loadCampaign(ctx context.Context, id string) (forms.Campaign, forms.Form, e
 			Domain:    formsDomain,
 			Operation: "get_campaign",
 		},
-		time.Millisecond*time.Duration(formsTTL),
+		formsTTL,
 		formsinterface.GetCampaignRequest{
 			ID: id,
 		},
@@ -115,7 +115,7 @@ func loadCampaign(ctx context.Context, id string) (forms.Campaign, forms.Form, e
 			Domain:    formsDomain,
 			Operation: "get_form",
 		},
-		time.Millisecond*time.Duration(formsTTL),
+		formsTTL,
 		formsinterface.GetFormRequest{
 			ID: campaign.FormID,
 		},

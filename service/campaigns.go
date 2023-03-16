@@ -31,6 +31,7 @@ func addCampaign(ctx context.Context, req formsinterface.AddCampaignRequest) (*f
 	}
 	req.Campaign.ID = uuid.New().String()
 	req.Campaign.CreateTime = time.Now()
+	req.Campaign.UpdateTime = time.Now()
 	if err := saveCampaign(req.Campaign); err != nil {
 		return nil, errors.Wrapf(err, "failed to save campaign")
 	}

@@ -1,0 +1,12 @@
+{
+	"start":{
+		"title":"Boknes 2023",
+		"description":"...",
+		"menu":[
+			{"title":"Inligting"},
+			{"title":"Skryf in (individu)"},
+			{"title":"Blok besprekings"},
+			{"title":"My Inskrywings"}
+		]
+	}
+}

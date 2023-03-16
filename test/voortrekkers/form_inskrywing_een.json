@@ -1,0 +1,104 @@
+{
+    "title":"Kamp Inskrywing (individu)",
+    "description":"Kamp ...",
+    "sections":[
+        {
+            "title":"Persoonlike Inligting",
+            "description":"Besonderhede van die persoon wat inskryf",
+            "name":"person",
+            "items":[
+                {"field":{"title":"Naam", "description":"Naam", "name":"naam", "short":{}}},
+                {"field":{"title":"Van", "description":"Van", "name":"van", "short":{}}},
+                {"field":{"title":"Geslag", "description":"", "name":"geslag", "choice":{"options":[
+                    {"title":"manlik", "value":"M"},
+                    {"title":"vroulik", "value":"V"}
+                ]}}},
+                {"field":{"title":"Ouderdom", "description":"Kies jou ouderdomsgroep", "name":"oud", "choice":{"options":[
+                    {"title":"Voorskool",    "value":"gr0",        "description":"Net as jou ouers ook gaan kamp"},
+                    {"title":"Graad 1,2,3",  "value":"gr123"       "description":"Net as jou ouers ook gaan kamp"},
+                    {"title":"Graad 4",      "value":"gr4",        "description":"Graad 4 leerder ingeskryf by 'n kommando"},
+                    {"title":"Graad 5",      "value":"gr5",        "description":"Graad 5 leerder ingeskryf by 'n kommando"},
+                    {"title":"Graad 6",      "value":"gr6",        "description":"Graad 6 leerder ingeskryf by 'n kommando"},
+                    {"title":"Graad 7",      "value":"gr7",        "description":"Graad 7 leerder ingeskryf by 'n kommando"},
+                    {"title":"Verkenner",    "value":"verkenner",  "description":"Hoërskool leerder ingeskryf by 'n kommando"},
+                    {"title":"Staatmaker",   "value":"staatmaker", "description":"Jong volwassene ingeskryf by 'n kommando"},
+                    {"title":"Offisier",     "value":"offisier",   "description":"Volwasse ingeskryf as 'n offisier by 'n kommando."},
+                    {"title":"Offisier",     "value":"heemraad",   "description":"Volwasse ingeskryf as heemraad by 'n kommando."},
+                    {"title":"Ouer",         "value":"ouer",       "description":"Volwasse ouer van 'n kind wat kom kamp."},
+                    {"title":"Kampraad",     "value":"kampraad",   "description":"Lede van die kampraad"},
+                ]}}}
+            ]
+        },
+        {
+            "name":"group",
+            "title":"Kursus- of Diensgroep",
+            "description":"Dui aan by watter kursus of dienspunt jy inskryf.",
+            "items":[
+                {"field":{"title":"Kursus/Dienspunt", "description":"Kies jou ouderdomsgroep", "name":"s1", "choice":{"options":[
+                    {"title":"Voorskool",                       "value":"voorskool",         "description":"Net as jou ouers ook gaan kamp",                  "only_option_when":"oud==gr0"},
+                    {"title":"Gr1,2,3 Seekatte",                "value":"seekat"             "description":"Net as jou ouers ook gaan kamp",                  "only_option_when":"oud==gr123"},
+                    {"title":"Gr4 Seekennis",                   "value":"seekennis",         "description":"Gr4 Seekennis spesialisasie",                     "only_option_when":"oud==gr4"},
+                    {"title":"Gr5 Seediere",                    "value":"seediere",          "description":"Gr5 Seediere spesialisasie",                      "only_option_when":"oud==gr5"},
+                    {"title":"Gr6 Kus-Ekosorg",                 "value":"ekosorg",           "description":"Gr6 Kus Ekosorg Spesialisasie net vir Gr6",       "enable_when":"oud==gr6"},
+                    {"title":"Gr6 Reviermondings",              "value":"riviere",           "description":"Gr6 Riviermondings Spesialisasie net vir Gr6",    "enable_when":"oud==gr6"},
+                    {"title":"Gr6 Staptogte",                   "value":"stappers",          "description":"Gr6 Staptogte Spesialisasie net vir Gr6",         "enable_when":"oud==gr6"},
+                    {"title":"Gr7 Strandbewustheid",            "value":"sb",                "description":"Gr7 Strandbewustheid Spesialisasie net vir Gr7",  "enable_when":"oud==gr7"},
+                    {"title":"Gr7 Gedenkwaardighede",           "value":"monumente",         "description":"Gr7 Gedenkwaardighede Spesialisasie net vir Gr7", "enable_when":"oud==gr7"},
+                    {"title":"Algemene Hulp/Werker",            "value":"werker"             "description":"Werk in snoepie en oral waar hulp nodig is.",     "enable_when":"out==staatmaker|verkenner"},
+                    {"title":"Helper by Voorskool",             "value":"voorskool_hulp",    "description":"Offisiere wat help by hierdie kursus",            "enable_when":"oud==staatmaker|offisier|heemraad"},
+                    {"title":"Helper by Gr1,2,3",               "value":"seekat_hulp",       "description":"Offisiere wat help by hierdie kursus",            "enable_when":"oud==staatmaker|offisier|heemraad"},
+                    {"title":"Helper by Gr4 Seekennis",         "value":"seekennis_hulp",    "description":"Offisiere wat help by hierdie kursus",            "enable_when":"oud==staatmaker|offisier|heemraad"},
+                    {"title":"Helper by Gr5 Seediere",          "value":"seediere_hulp",     "description":"Offisiere wat help by hierdie kursus",            "enable_when":"oud==staatmaker|offisier|heemraad"},
+                    {"title":"Helper by Gr6 Kus-ekosorg",       "value":"ekosorg_hulp",      "description":"Offisiere wat help by hierdie kursus",            "enable_when":"oud==staatmaker|offisier|heemraad"},
+                    {"title":"Helper by Gr6 Riviermondings",    "value":"riviere_hulp",      "description":"Offisiere wat help by hierdie kursus",            "enable_when":"oud==staatmaker|offisier|heemraad"},
+                    {"title":"Helper by Gr6 Staptogte",         "value":"stappers_hulp",     "description":"Offisiere wat help by hierdie kursus",            "enable_when":"oud==staatmaker|offisier|heemraad"},
+                    {"title":"Helper by Gr7 Strandbewustheid",  "value":"sb_hulp",           "description":"Offisiere wat help by hierdie kursus",            "enable_when":"oud==staatmaker|offisier|heemraad"},
+                    {"title":"Helper by Gr7 Gedenkwaardighede", "value":"monumente_hulp",    "description":"Offisiere wat help by hierdie kursus",            "enable_when":"oud==staatmaker|offisier|heemraad"},
+                    {"title":"Kombuisspan",                     "value":"kombuis"            "description":"Helpers in die kombuis",                          "enable_when":"oud==verkenner|staatmaker|offisier|heemraad|ouer"},
+                    {"title":"Sekuriteit",                      "value":"sekuriteit"         "description":"Sekuriteit",                                      "enable_when":"oud==staatmaker|offisier|heemraad|ouer"},
+                    {"title":"Kursusleier",                     "value":"kursusleier",       "description":"Kursusleier",                                     "enable_when":"offisier|heemraad|staatmaker"},
+                ]}}},
+
+                
+
+
+
+
+                {"field":{"title":"Section 2's Field1", "description":"S2Desc1", "name":"f1", "short":{}}},
+                {"field":{"title":"Naam", "description":"Naam", "name":"name", "short":{}}},
+                {"field":{"title":"Naam", "description":"Naam", "name":"name", "short":{}}},
+                {"field":{"title":"Field2", "description":"Desc2", "name":"s1", "integer":{}}},
+                {"field":{"title":"Field3", "description":"Desc3", "name":"s1", "number":{}}},
+                {"field":{"title":"Field4", "description":"Desc4", "name":"s1", "text":{}}},
+                {"field":{"title":"Field5", "description":"Desc5", "name":"s1", "choice":{"options":[
+                    {"title":"A", "value":"1"},
+                    {"title":"B", "value":"2"}
+                ]}}},
+                {"field":{"title":"Field6", "description":"Desc6", "name":"s1", "selection":{"options":[
+                    {"title":"CA", "value":"11"},
+                    {"title":"CB", "value":"12"}
+                ]}}},
+                {"field":{"title":"Field7", "description":"Desc7", "name":"s1", "date":{}}},
+                {"field":{"title":"Field8", "description":"Desc8", "name":"s1", "time":{}}},
+                {"field":{"title":"Field9", "description":"Desc9", "name":"s1", "duration":{}}},
+                {"header":{"title":"Some header", "description":"Some header Desc1"}},
+                {"image":{"title":"Some image", "description":"Image caption is here", "id":"123"}},
+                {"table":{"title":"Table1", "description":"table one", "name":"table_1", "min":0, "max":5,
+                    "uniq":["f1"],
+                    "fields":[
+                        {"title":"TableField1", "name":"f1", "short":{}},
+                        {"title":"TableField2", "name":"f2", "integer":{}}
+                    ]
+                }},
+                {"sub":{"title":"Sub1", "description":"sub one", "name":"sub_1", "min":0, "max":5, "section":{
+                    "title":"SubSection1Title", "description":"sub section in section 1", "name":"sub1",
+                    "items":[
+                        {"image":{"title":"IMG1", "id":"22"}},
+                        {"field":{"title":"F1", "name":"f2", "short":{}}}
+                    ]
+                }}},
+                {"field":{"title":"Section 2's Field2", "description":"S2Desc2", "name":"f2", "integer":{}}}
+            ]
+        }
+    ]
+}

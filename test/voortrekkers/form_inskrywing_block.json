@@ -1,0 +1,39 @@
+{
+    "title":"Kamp Inskrywing (blok bespreking)",
+    "description":"Kamp ...",
+    "pre-action":"load_available_estimates",
+    "sections":[
+        {
+            "title":"Blok Reservering",
+            "description":"Skryf hier in as jy wil plek reserveer vir 'n groep.\n\nDeposito van R500 vir elke plek is betaalbaar binne 30minute na reservering gemaak is.\n\n Indien die deposito laat is, gaan die plekke weggegee word vir ander soos nodig. Lees asseblief die volledige (kampbrief)[https://kamp.co.za/kampbrief] voor jy inskryf.",
+            "name":"blok",
+            "items":[
+                {"field":{"title":"Kontak persoon", "description":"Naam & van van kontak persoon. Hierdie persoon hoef nie in te skryf nie maar hanteer enige vrae rakenede die groep vanaf die kampraad.", "name":"naam", "short":{}}},
+                {"field":{"title":"Telefoon", "description":"Telefoon nommer vir navrae oor die groep", "name":"telefoon", "short":{}}},
+                {"field":{"title":"E-pos", "description":"E-pos adress vir navrae oor die groep", "name":"email", "short":{}}},
+                {"field":{"header":{"title":"Reservering", "description":"Dui aan hoeveel van die volgende in julle groep is"}}},
+                {"field":{"title":"Voorskool",                       "value":"voorskool",         "description":"Net as jou ouers ook gaan kamp",                  "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Gr1,2,3 Seekatte",                "value":"seekat"             "description":"Net as jou ouers ook gaan kamp",                  "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Gr4 Seekennis",                   "value":"seekennis",         "description":"Gr4 Seekennis spesialisasie",                     "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Gr5 Seediere",                    "value":"seediere",          "description":"Gr5 Seediere spesialisasie",                      "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Gr6 Kus-Ekosorg",                 "value":"ekosorg",           "description":"Gr6 Kus Ekosorg Spesialisasie net vir Gr6",       "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Gr6 Reviermondings",              "value":"riviere",           "description":"Gr6 Riviermondings Spesialisasie net vir Gr6",    "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Gr6 Staptogte",                   "value":"stappers",          "description":"Gr6 Staptogte Spesialisasie net vir Gr6",         "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Gr7 Strandbewustheid",            "value":"sb",                "description":"Gr7 Strandbewustheid Spesialisasie net vir Gr7",  "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Gr7 Gedenkwaardighede",           "value":"monumente",         "description":"Gr7 Gedenkwaardighede Spesialisasie net vir Gr7", "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Algemene Hulp/Werker",            "value":"werker"             "description":"Werk in snoepie en oral waar hulp nodig is.",     "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Helper by Voorskool",             "value":"voorskool_hulp",    "description":"Offisiere wat help by hierdie kursus",            "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Helper by Gr1,2,3",               "value":"seekat_hulp",       "description":"Offisiere wat help by hierdie kursus",            "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Helper by Gr4 Seekennis",         "value":"seekennis_hulp",    "description":"Offisiere wat help by hierdie kursus",            "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Helper by Gr5 Seediere",          "value":"seediere_hulp",     "description":"Offisiere wat help by hierdie kursus",            "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Helper by Gr6 Kus-ekosorg",       "value":"ekosorg_hulp",      "description":"Offisiere wat help by hierdie kursus",            "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Helper by Gr6 Riviermondings",    "value":"riviere_hulp",      "description":"Offisiere wat help by hierdie kursus",            "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Helper by Gr6 Staptogte",         "value":"stappers_hulp",     "description":"Offisiere wat help by hierdie kursus",            "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Helper by Gr7 Strandbewustheid",  "value":"sb_hulp",           "description":"Offisiere wat help by hierdie kursus",            "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Helper by Gr7 Gedenkwaardighede", "value":"monumente_hulp",    "description":"Offisiere wat help by hierdie kursus",            "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Kombuisspan",                     "value":"kombuis"            "description":"Helpers in die kombuis",                          "integer"{"min":0, "max":100}}},
+                {"field":{"title":"Sekuriteit",                      "value":"sekuriteit"         "description":"Sekuriteit",                                      "integer"{"min":0, "max":100}}}
+            ]
+        }
+    ]
+}

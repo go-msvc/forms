@@ -107,6 +107,17 @@ func updSession(ctx context.Context, req formsinterface.UpdSessionRequest) (*for
 		existingSession.Email = req.Session.Email
 	}
 
+	if existingSession.Authenticated && !req.Session.Authenticated {
+		//user is logging out - cleanup - all other devices will be logged out too
+		log.Debugf("device(%s) logged out and ended session(%s) for email(%s)", device.ID, existingSession.ID, existingSession.Email)
+		delete(sessionByEmail, existingSession.Email)
+		delete(sessionByID, device.SessionID)
+		existingSession.Authenticated = false
+		existingSession.Email = ""
+		device.SessionID = ""
+		return nil, nil
+	} //if logout
+
 	if req.Session.Email != "" && req.Session.Authenticated && !existingSession.Authenticated {
 		//logged in with a temp session
 		//if already has authenticated session for this email, switch over to that session

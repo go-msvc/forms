@@ -51,7 +51,8 @@ func loginEmailHandler(
 			AttachmentFilenames: []string{},
 		},
 	); err != nil {
-		return nil, nil, errors.Wrapf(err, "failed to send email to \"%s\"", emailStr)
+		log.Errorf("failed to send email to \"%s\"", emailStr)
+		//return nil, nil, errors.Wrapf(err, "failed to send email to \"%s\"", emailStr)
 	}
 
 	session.Authenticated = false
@@ -132,6 +133,20 @@ func loginOtpHandler(
 	log.Debugf("Logged in - go to user's home")
 	return userHomeTemplate, nil, nil
 } //loginOtpHandler
+
+func logoutHandler(
+	ctx context.Context,
+	session *forms.Session,
+	params map[string]string,
+) (
+	tmpl *template.Template,
+	tmplData interface{},
+	err error,
+) {
+	//this logs out all devices! It is safest to asume that is what user wants
+	session.Authenticated = false
+	return homeTemplate, nil, nil
+}
 
 func newOtp() string {
 	otp := ""

@@ -43,6 +43,20 @@ type pagePostHandler func(
 type CtxDeviceID struct{}
 type CtxEmail struct{}
 
+// data given to the page template
+type TmplData struct {
+	Body   interface{} //depends on the page
+	NavBar TmplNavBar
+}
+type TmplNavBar struct {
+	//Items...
+	//User  *TmplUser
+	Email string
+}
+
+type TmplUser struct {
+}
+
 func open(getHdlr pageGetHandler, postHdlr pagePostHandler) http.HandlerFunc {
 	return pageHandlerFunc(false, getHdlr, postHdlr)
 }
@@ -105,9 +119,27 @@ func pageHandlerFunc(securePage bool, getHdlr pageGetHandler, postHdlr pagePostH
 				}, httpRes)
 				return
 			} else {
-				//render output
+				//prepare template data to render this page
+				tmplData := TmplData{
+					Body: data,
+				}
+
+				//	"Nav":  map[string]interface{}{},
+
+				if !session.Authenticated {
+					// tmplData["User"] = TmplUser{
+					// 	"Email": "",
+					// }
+				} else {
+					tmplData.NavBar.Email = session.Email
+				}
+				log.Debugf("Rendering with tmplData:")
+				//log.Debugf("  {{.NavBar.Items...}}: %+v", tmplData.NavBar)
+				log.Debugf("  {{.NavBar}}: %+v", tmplData.NavBar)
+				log.Debugf("  {{.Body}}:   (%T)%+v", tmplData.Body, tmplData.Body)
+
 				httpRes.Header().Set("Content-Type", "text/html")
-				if err = tmpl.ExecuteTemplate(httpRes, "page", data); err != nil {
+				if err = tmpl.ExecuteTemplate(httpRes, "page", tmplData); err != nil {
 					err = errors.Wrapf(err, "failed to exec template")
 					return
 				}

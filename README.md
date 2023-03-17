@@ -30,12 +30,33 @@ Note: to access the forms outside, need generic go-msvc api gateway to get it fr
 - Using internal session stored in-memory in the micro-service
 - Added basic field validation into the form description and template (e.g. date min/max already added) but not yet applied
 
+- 2023-03-16
+- Auth is basically working with internal session data and device ID, but error handling is poor and no links to go back to login/out... need to add nav bar to top of page to show email when logged in and link to logout etc...
+
+- 2023-03-17
+- Added topnav to control login and logout - working
+- Nav bar is currently static - need to respond to page
+
 ## Next ##
+- Test well for normal users who starts with campaign link
+- Show recent campaigns in user's home
+- Show my campaigns
+- Control nav bar items
+
+- User home owning a campaign: Show entries, open them and select action, and list of entries in different states.
+- Other user also to see entries when in processing group
+- Option to add other user or remove users
+- Show list of actions/queues and entries in queues
+
+- Later: Give user opportunity to edit profile with list of persons in own profile
+- Then option in a form to select a person from your list...
+    In the entry - distinguish between submitted and person being entered
+    Allow forms with multiple persons
+    Do validation on selected person's fields...
+
 - Identify the user and store a profile - even if empty
     but indicate if email is not set so that user can recover profile when moving to other device
     associate multiple devices to a profile
-
-
 
 - Let submit store client token, so that messages can be queued for a client to review without having to login
     client can also open from link sent in email...

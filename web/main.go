@@ -36,6 +36,8 @@ func main() {
 	r.HandleFunc("/home", open(page(homeTemplate), nil))
 	r.HandleFunc("/login", open(page(loginEmailTemplate), loginEmailHandler))
 	r.HandleFunc("/otp", open(page(loginOtpTemplate), loginOtpHandler))
+	r.HandleFunc("/logout", open(logoutHandler, nil))
+	r.HandleFunc("/user", secure(page(userHomeTemplate), nil))
 	r.HandleFunc("/campaign/{id}", secure(showCampaign, postCampaign))
 	r.HandleFunc("/", secure(page(homeTemplate), nil)) //defaultHandler)
 	http.Handle("/", r)
@@ -76,9 +78,7 @@ func httpLogger(h http.Handler) http.Handler {
 	})
 }
 
-// var pageTemplate *template.Template
 var (
-	//pageTemplate              map[string]*template.Template
 	homeTemplate              *template.Template
 	loginEmailTemplate        *template.Template
 	loginOtpTemplate          *template.Template
@@ -90,7 +90,6 @@ var (
 )
 
 func loadResources() {
-	//pageTemplate = make(map[string]*template.Template)
 	homeTemplate = loadTemplates([]string{"home", "page"})
 	loginEmailTemplate = loadTemplates([]string{"login-email-form", "page"})
 	loginOtpTemplate = loadTemplates([]string{"login-otp-form", "page"})
@@ -115,6 +114,7 @@ func loadTemplates(templateNames []string) *template.Template {
 }
 
 func page(pt *template.Template) pageGetHandler {
+	//here we can fail on startup if there are missing templates
 	if pt == nil {
 		panic("missing template")
 	}

@@ -42,6 +42,7 @@ type pagePostHandler func(
 
 type CtxDeviceID struct{}
 type CtxEmail struct{}
+type CtxTargetURL struct{}
 
 // data given to the page template
 type TmplData struct {
@@ -62,7 +63,7 @@ func open(getHdlr pageGetHandler, postHdlr pagePostHandler) http.HandlerFunc {
 }
 
 func secure(getHdlr pageGetHandler, postHdlr pagePostHandler) http.HandlerFunc {
-	return pageHandlerFunc(false, getHdlr, postHdlr)
+	return pageHandlerFunc(true, getHdlr, postHdlr)
 }
 
 func pageHandlerFunc(securePage bool, getHdlr pageGetHandler, postHdlr pagePostHandler) http.HandlerFunc {
@@ -86,7 +87,32 @@ func pageHandlerFunc(securePage bool, getHdlr pageGetHandler, postHdlr pagePostH
 		var data interface{}
 		defer func() {
 			if err != nil {
-				log.Errorf("err=%+v", err)
+				if ec, ok := err.(errorWithCode); ok && ec.code != 0 {
+					switch ec.Code() {
+					case http.StatusTemporaryRedirect, http.StatusSeeOther:
+						//update session before redirect
+						if sessionErr := updSession(ctx, deviceID, session); sessionErr != nil {
+							err = errors.Wrapf(sessionErr, "failed to write internal session")
+						}
+						//save cookie data
+						delete(cookie.Values, "target-url")
+						delete(cookie.Values, 42)
+						delete(cookie.Values, "foo")
+						for n, v := range cookie.Values {
+							log.Debugf("  set cookie: %v = %v", n, v)
+						}
+						if cookieErr := cookie.Save(httpReq, httpRes); cookieErr != nil {
+							err = errors.Wrapf(cookieErr, "failed to write cookie data")
+						}
+						//now ready to redirect
+						httpReq.Method = http.MethodGet
+						http.Redirect(httpRes, httpReq, ec.targetURL, ec.Code())
+					default:
+						log.Errorf("err=(%T)%+v", err, err)
+						http.Error(httpRes, "unexpected error", http.StatusNotAcceptable)
+					}
+					return
+				}
 			}
 
 			// update internal session (todo: only if modified)
@@ -140,6 +166,7 @@ func pageHandlerFunc(securePage bool, getHdlr pageGetHandler, postHdlr pagePostH
 
 				httpRes.Header().Set("Content-Type", "text/html")
 				if err = tmpl.ExecuteTemplate(httpRes, "page", tmplData); err != nil {
+					log.Errorf("page template failed: %+v", err)
 					err = errors.Wrapf(err, "failed to exec template")
 					return
 				}
@@ -161,9 +188,13 @@ func pageHandlerFunc(securePage bool, getHdlr pageGetHandler, postHdlr pagePostH
 			log.Debugf("  (%T)%+v : (%T)%+v", key, key, val, val)
 		}
 
+		if targetURL, ok := cookie.Values["target-url"]; ok && targetURL != "" {
+			ctx = context.WithValue(ctx, CtxTargetURL{}, targetURL)
+		}
+
 		//when device id cannot be retrieved from cookie, assign a new device ID
 		//this typically happens first time a device is used or after browser history was cleared
-		//the device ID is internally associated with an session to avoid user to login repeatedly
+		//the device ID is internally associated with an session to avoid need to user to login repeatedly
 		var ok bool
 		deviceID, ok = cookie.Values["device-id"].(string)
 		if !ok || deviceID == "" {
@@ -176,10 +207,13 @@ func pageHandlerFunc(securePage bool, getHdlr pageGetHandler, postHdlr pagePostH
 		ctx = context.WithValue(ctx, CtxDeviceID{}, deviceID)
 		session, err = getSession(ctx, deviceID)
 		if err != nil {
-			//can't get a session, will also not be able to create one so no point to try login
+			//can't get an existing/new session
+			//will also not be able to create one so no point to try login
 			err = errors.Wrapf(err, "failed to get session")
 			return
 		}
+
+		log.Debugf("secure=%v authenticated=%v", securePage, session.Authenticated)
 		if securePage && !session.Authenticated {
 			//user need to login to see this page
 			//store requested URL in cookie then display login form
@@ -196,10 +230,12 @@ func pageHandlerFunc(securePage bool, getHdlr pageGetHandler, postHdlr pagePostH
 		params := map[string]string{}
 		for n, v := range httpReq.URL.Query() {
 			params[n] = fmt.Sprintf("%v", v)
+			log.Debugf("param[%s]=\"%s\" (from URL Query)", n, params[n])
 		}
 		vars := mux.Vars(httpReq)
 		for n, v := range vars {
 			params[n] = v
+			log.Debugf("param[%s]=\"%s\" (from URL vars)", n, params[n])
 		}
 
 		switch httpReq.Method {
@@ -220,18 +256,19 @@ func pageHandlerFunc(securePage bool, getHdlr pageGetHandler, postHdlr pagePostH
 				return
 			}
 			log.Debugf("form data: %+v", httpReq.PostForm)
-
 			tmpl, data, err = postHdlr(ctx, session, params, httpReq.PostForm)
 			if err != nil {
-				err = errors.Wrapf(err, "post handler failed")
+				//also for redirect...
+				log.Debugf("postHandler failed: (%T)%+v", err, err)
 				return
 			}
+			log.Debugf("postHandler succeeded")
 
 		default:
 			err = errors.Errorf("method not supported")
 		}
 	} //handlerFunc()
-} //page2()
+} //pageHandlerFunc()
 
 func getSession(ctx context.Context, deviceID string) (*forms.Session, error) {
 	//lookup session for this device ID
@@ -358,4 +395,26 @@ func renderPage(w io.Writer, t *template.Template, data any) error {
 		return errors.Wrapf(err, "failed to exec template")
 	}
 	return nil
+}
+
+type errorWithCode struct {
+	error
+	code      int
+	targetURL string
+}
+
+// func (e errorWithCode) Error() string {
+// 	return e.error.Error()
+// }
+
+func (e errorWithCode) Code() int {
+	return e.code
+}
+
+func ErrorRedirect(targetURL string) errorWithCode {
+	return errorWithCode{
+		error:     errors.Errorf("redirect to %s", targetURL),
+		code:      http.StatusSeeOther, //http.StatusTemporaryRedirect = redirect with same method e.g. POST
+		targetURL: targetURL,
+	}
 }

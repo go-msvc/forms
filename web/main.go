@@ -37,9 +37,10 @@ func main() {
 	r.HandleFunc("/login", open(page(loginEmailTemplate), loginEmailHandler))
 	r.HandleFunc("/otp", open(page(loginOtpTemplate), loginOtpHandler))
 	r.HandleFunc("/logout", open(logoutHandler, nil))
-	r.HandleFunc("/user", secure(page(userHomeTemplate), nil))
-	r.HandleFunc("/campaign/{id}", secure(showCampaign, postCampaign))
-	r.HandleFunc("/", secure(page(homeTemplate), nil)) //defaultHandler)
+	r.HandleFunc("/user", secure(userHomeGetHandler, nil))
+	r.HandleFunc("/user/campaign/{campaign_id}", secure(myCampaign, nil)) //for submission
+	r.HandleFunc("/campaign/{id}", secure(showCampaign, postCampaign))    //for submission
+	r.HandleFunc("/", secure(page(homeTemplate), nil))                    //defaultHandler)
 	http.Handle("/", r)
 
 	//fileServer serves static files such as style sheets from the ./resources folder
@@ -68,7 +69,7 @@ func main() {
 	})
 
 	//start the web server
-	http.ListenAndServe("localhost:8080", nil)
+	http.ListenAndServe(":8080", nil)
 }
 
 func httpLogger(h http.Handler) http.Handler {
@@ -83,6 +84,7 @@ var (
 	loginEmailTemplate        *template.Template
 	loginOtpTemplate          *template.Template
 	userHomeTemplate          *template.Template
+	userCampaignTemplate      *template.Template
 	formTemplate              *template.Template
 	formSubmittedTemplate     *template.Template
 	campaignSubmittedTemplate *template.Template
@@ -94,6 +96,7 @@ func loadResources() {
 	loginEmailTemplate = loadTemplates([]string{"login-email-form", "page"})
 	loginOtpTemplate = loadTemplates([]string{"login-otp-form", "page"})
 	userHomeTemplate = loadTemplates([]string{"user-home", "page"})
+	userCampaignTemplate = loadTemplates([]string{"user-campaign", "page"})
 	formTemplate = loadTemplates([]string{"form", "page"})
 	formSubmittedTemplate = loadTemplates([]string{"form-submitted", "page"})
 	campaignSubmittedTemplate = loadTemplates([]string{"campaign-submitted", "page"})

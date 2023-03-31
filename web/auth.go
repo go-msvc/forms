@@ -11,7 +11,6 @@ import (
 	"github.com/go-msvc/errors"
 	"github.com/go-msvc/forms"
 	"github.com/go-msvc/humans"
-	"github.com/jansemmelink/events/email"
 )
 
 // loginEmailHandler is called when login-email-form is posted to send the OTP
@@ -36,24 +35,25 @@ func loginEmailHandler(
 	otp := newOtp()
 	otpExpiry := time.Now().Add(time.Minute * 10)
 
+	log.Errorf("NOT SENDING EMAIL")
 	//send email with OTP
-	if err := email.Send(
-		email.Message{
-			From:        email.Email{Addr: "jan.semmelink@gmail.com", Name: "Forms"},
-			To:          []email.Email{{Addr: emailValue.String()}},
-			Cc:          []email.Email{},
-			Bcc:         []email.Email{},
-			Subject:     "Login OTP",
-			ContentType: "text/html",
-			Content: `<h1>Forms Login</h1>
-			<p>Enter the following OTP to login to forms.</p>
-			<h2>` + otp + `</h2>`,
-			AttachmentFilenames: []string{},
-		},
-	); err != nil {
-		log.Errorf("failed to send email to \"%s\"", emailStr)
-		//return nil, nil, errors.Wrapf(err, "failed to send email to \"%s\"", emailStr)
-	}
+	// if err := email.Send(
+	// 	email.Message{
+	// 		From:        email.Email{Addr: "jan.semmelink@gmail.com", Name: "Forms"},
+	// 		To:          []email.Email{{Addr: emailValue.String()}},
+	// 		Cc:          []email.Email{},
+	// 		Bcc:         []email.Email{},
+	// 		Subject:     "Login OTP",
+	// 		ContentType: "text/html",
+	// 		Content: `<h1>Forms Login</h1>
+	// 		<p>Enter the following OTP to login to forms.</p>
+	// 		<h2>` + otp + `</h2>`,
+	// 		AttachmentFilenames: []string{},
+	// 	},
+	// ); err != nil {
+	// 	log.Errorf("failed to send email to \"%s\"", emailStr)
+	// 	//return nil, nil, errors.Wrapf(err, "failed to send email to \"%s\"", emailStr)
+	// }
 
 	session.Authenticated = false
 	session.Email = emailValue.String()
@@ -106,10 +106,12 @@ func loginOtpHandler(
 	if enteredOtp == "" {
 		return loginOtpTemplate, map[string]interface{}{"error": "OTP not yet entered."}, nil
 	}
-	if enteredOtp != expectedOtp {
-		log.Errorf("entered otp=\"%s\" != expectedOtp=\"%s\"", enteredOtp, expectedOtp)
-		return loginOtpTemplate, map[string]interface{}{"error": "Wrong OTP. Please try again."}, nil
-	}
+
+	//todo: uncomment - commented out so can login with any OTP while testing
+	// if enteredOtp != expectedOtp {
+	// 	log.Errorf("entered otp=\"%s\" != expectedOtp=\"%s\"", enteredOtp, expectedOtp)
+	// 	return loginOtpTemplate, map[string]interface{}{"error": "Wrong OTP. Please try again."}, nil
+	// }
 	log.Errorf("entered CORRECT otp=\"%s\"", enteredOtp)
 
 	//correct OTP - user is now logged in
@@ -127,10 +129,12 @@ func loginOtpHandler(
 	session.Data["opt_expiry"] = nil
 
 	//go to page originally requested or go to user's home
-	//todo
-	//else:
-	//go to user's home - todo, populate sensibly...
-	log.Debugf("Logged in - go to user's home")
+	log.Debugf("Logged in")
+	if targetURL, ok := ctx.Value(CtxTargetURL{}).(string); ok && targetURL != "" {
+		log.Debugf("Go to target-url: %s", targetURL)
+		return nil, nil, ErrorRedirect(targetURL)
+	}
+	log.Debugf("Go to user's home")
 	return userHomeTemplate, nil, nil
 } //loginOtpHandler
 

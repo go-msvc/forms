@@ -37,9 +37,90 @@ Note: to access the forms outside, need generic go-msvc api gateway to get it fr
 - Added topnav to control login and logout - working
 - Nav bar is currently static - need to respond to page
 
+- 2023-03-19
+- Written focus section below... need to keep focus on what is needed to work best
+- Need to focus on back-end first!
+- Added user home and campaing page - but really basic and user home does not show real data yet.
+    because not working on front-end for now.
+
+## Next (UI) ##
+- 2023-03-30:
+    - Show Campaign: Chrome Incognito Window:
+            http://localhost:8080/user/campaign/8df7997b-4a90-4784-a496-c0ec453c10f2#about
+    - With incognito:
+        - Ask for email -> then OTP -> then show form
+            and included confirmed email in submission
+    - Include confirmed email in each submission
+    - For return user:
+        - Not yet submitted:
+            - show form immediately
+        - Already submitted:
+            - show list of existing submissions and option to submit another
+
+    - Remove cookies/session data after login, e.g. otp values can be cleared
+    - Improve form validation in the front-end...
+    - Later for return user - show returned forms + comments to edit and submit updates
+
+## Then (BE) ##
+- ALWAYS - BACK-END rather than front-end
+    - Front-end can be improved later
+    - For now, all features must be available in the back-end first.
+
+- Service DB Update
+    - store relational data for forms/campaigns stored as JSON on disk
+    - need a sql table of key data for lookups to find list of ids to manage
+    - storage currently on disk can later move to an object db, no need to move yet.
+        - 2023-03-30: fixed go-msvc/redis-utils now working keyvalue store to use
+
+- Basic submissions:
+    - show your campaigns in user's home
+    - backend create a campaign with no automation owned by a user
+    - share a link so others can fill and submit
+    - show submitted forms
+    - download data as CSV/JSON
+- Automation:
+    - put submissions in processing queue
+    - show queue
+    - select other queue and move the doc
+- Reject/Review
+    - Send form back to user for editing (email) with a comment - track the progress steps
+    - Allow to edit until re-submitted then back in queue
+    - Show review notes to the user... later can show per field or only show fields to be reviewed
+- Scripted automation
+    - Scripted validation of field values - including api calls and logic
+
+- Before publish
+    - Throttle queries from same source for DOS attacks
+    - Limit free-tier nr of forms/campaigns/submissions per users
+    - Allow to change the limits per user
+
+- Protected Details
+    - Allow users to enter profile details and enter a form as a person without sharing your details
+    - So the submission only contains your ID & Name, which the campaign driver can use to contact you
+        by sending messages to you which you can decide to ignore or read.
+    - Then show messages to user after login
+    - Later can push to mobile
+    - Allow user to block filter senders. Auto allow user to send to you after you submitted.
+
+- Multi Profile
+    - Allow creation of profiles for other people (like your children)
+    - Submit forms on their behalf - again without charing the details.
+    - Let campaign ask for personal details they need
+    - Let submitted approve sending of selected info
+    - Show reply messages per profile in your inbox
+
+
+## Bugs ##
+
+- User's home entered by URL (after login) does not show user details in NAV bar... using different handler - need to get the data in this case - prevents user from logout!
+
+
+
+
 ## Next ##
+
 - Test well for normal users who starts with campaign link
-- Show recent campaigns in user's home
+- Show recent campaigns in user's home - for now created in back-end.
 - Show my campaigns
 - Control nav bar items
 
